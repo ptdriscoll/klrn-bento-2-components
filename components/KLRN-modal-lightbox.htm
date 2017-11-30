@@ -1,0 +1,200 @@
+{% load sekizai_tags filertags %}
+{% load filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables 
+toggle = SwitcherField
+number_of_hours_before_reshowing = TextField
+CSV_file = FilerFileField
+
+event_click_category = TextField
+event_click_action = TextField
+event_click_label = TextField
+
+event_view_category = TextField
+event_view_action = TextField
+event_view_label = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style>
+    
+    #klrn_lightbox .modal-body { max-height: none; }
+    #klrn_lightbox .modal-body img { width: 100%; border: 1px solid #ccc; }
+    
+</style>
+{% endaddtoblock %}
+
+
+<div class="modal hide fade" id="klrn_lightbox" tabindex="-1" role="dialog" aria-labelledby="modal_title_lightbox" aria-describedby="modal_body_lightbox" aria-hidden="true">
+	<div id="modal_body_lightbox" class="modal-body">
+	
+		<div id="lightbox_wrapper" class="">
+			<a  href="#" id="lightbox_link">
+				<img src="http://pbs.klrn.org/data/images/splash-0815/3-tenors.jpg" id="lightbox_image" class="lightbox_image img-responsive" alt="Lightbox" /> 
+			</a>			
+		</div>
+		
+	</div><!--modal-body-->
+	<div class="modal-footer">
+		<button type="button" class="btn btn-default" data-dismiss="modal" style="font-size: 14px;">Close</button>
+	</div><!--modal-footer-->
+</div><!--modal lightbox-->
+
+
+
+{% addtoblock "js" %}
+<script type="text/javascript"> 
+(function ($, undefined) {
+
+    //set namespace of utility library
+    var exports = {};
+    
+    //move modal to end of footer
+	document.getElementsByTagName('body')[0].appendChild(document.getElementById('klrn_lightbox'));
+	
+	//ajax callback to parse lightbox CSV data and set modal   
+	var callback = function (data) {
+		var imgSrc = '',
+				link = '',
+				dates = {},
+				results,
+				dataVersion = '',
+				data = exports.parseCSV(data);		
+
+        //console.log(data);	
+		
+		//check if anything is in schedule or not        
+		dates = exports.parseDates(data);	
+		results = exports.setSchedule(dates.startDates, dates.endDates); 
+		
+        //console.log(dates);
+
+		//FOR TESTING
+		//results.inSchedule = true;
+		//results.scheduleIndex = 3;
+
+		if (results.inSchedule === true) { 
+			var index = results.scheduleIndex,
+				item = data[index],
+				checkVisits = exports.getCookie('lightboxVisits'),
+				checkExit = exports.getCookie('lightboxExit'),
+				hoursNotToShow = parseInt('{{ number_of_hours_before_reshowing | default:'0' }}'),
+				timeLeftForPage = exports.setTime(dates.endDates[results.scheduleIndex], false).getTime(),
+				timeRightNow = exports.setTime().getTime(),
+				setExitTime,
+                endCampaign = data[index].end_campaign,
+                trackOpenBool = (!!'{{ event_view_category }}' && !!'{{ event_view_action }}' && !!'{{ event_view_label }}'),
+                trackClickBool = (!!'{{ event_click_category }}' && !!'{{ event_click_action }}' && !!'{{ event_click_label }}');
+				
+			//set event tracking code for model opens and clicks, checking first for universal analytics
+            if (trackOpenBool) {
+				var	trackOpen = (ga)
+					? {hitType: 'event',
+                       eventCategory: '{{ event_view_category }}',
+                       eventAction: '{{ event_view_action }}',
+                       eventLabel: '{{ event_view_label }}'}
+					: ['_trackEvent',
+                       '{{ event_view_category }}',
+                       '{{ event_view_action }}',
+                       '{{ event_view_label }}',
+                       0, true]; 
+            }
+            
+            if (trackClickBool) {
+			var	trackClick = (ga)
+					? {hitType: 'event',
+                       eventCategory: '{{ event_click_category }}',
+                       eventAction: '{{ event_click_action }}',
+                       eventLabel: '{{ event_click_label }}'}
+					: ['_trackEvent',
+                       '{{ event_click_category }}',
+                       '{{ event_click_action }}',
+                       '{{ event_click_label }}',
+                       0, false];
+            }
+
+			//check if exit cookie is active and should stop lightbox
+			if (!!checkExit || exports.getCookie(item.unique_campaign)) {
+					return;
+			}
+			else { 
+		        imgSrc = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/'
+		           	   + 'KLRN/data/images/'
+					   + item.image_folder + '/'
+					   + item.image;
+				link = item.link;
+				document.getElementById('lightbox_image').src = imgSrc;
+
+				if (link === '') {
+					exports.addListener(document.getElementById('lightbox_anchor'), 'click', function () {
+						$('#klrn_lightbox').modal('hide');
+						return false;
+					});
+				}
+				else {
+					document.getElementById('lightbox_link').href = link;
+					exports.addListener(document.getElementById('lightbox_link'), 'click', function () {
+                        if (trackClickBool) { 
+							if (ga) ga('send', trackClick);
+							else _gaq.push(trackClick);
+                        }
+						//invoke any loading displays, spinners, etc., here;						
+					});
+				}
+				//console.log("Clicked Exit Button : " + checkExit);
+				//console.log("Number of Exits: " + checkVisits);
+                
+			//track modal open event and set visit cookie
+			$("#klrn_lightbox").on('shown', function(){
+                
+                if (trackOpenBool) {
+					if (ga) ga('send', trackOpen);
+  		        	else _gaq.push(trackOpen);
+                }
+                           
+				if (checkVisits) {
+					checkVisits = Math.floor(checkVisits) + 1;
+					exports.setCookie('lightboxVisits', checkVisits, endCampaign, '/', 'klrn.org');
+					//console.log(item.end_campaign);
+          		}
+				else {
+                	checkVisits = 1;
+                	exports.setCookie('lightboxVisits', checkVisits, endCampaign, '/', 'klrn.org');
+				}
+
+        	});	
+                    
+        	//set exit cookie when modal closes
+			$('#klrn_lightbox').on('hidden', function(){
+				var setExitTime = timeLeftForPage < (timeRightNow + (hoursNotToShow * 3600000))
+								? exports.setTimeSpan(Math.ceil((timeLeftForPage - timeRightNow) / 60000), 'minutes')
+								: exports.setTimeSpan(hoursNotToShow, 'hours');
+				exports.setCookie('lightboxExit', 'exited', setExitTime, '/', 'klrn.org');
+			});
+
+			$('#klrn_lightbox').modal('show');
+		}
+	}
+}
+    
+	//check for klrn library, then load CSV data
+    if ({{ toggle }}) {
+        var checkOnLoad = function checkOnload() {
+            if (typeof klrn === 'undefined') {
+                setTimeout(checkOnload, 50);
+            }
+            else {	            
+                exports = klrn;
+                exports.ajaxLoad('{{ CSV_file }}' 
+                	+ '?version=' + '12-15', callback);        
+            }	
+        }
+        checkOnLoad();	
+    }
+ 
+})(jQuery);  
+</script> 
+{% endaddtoblock %}

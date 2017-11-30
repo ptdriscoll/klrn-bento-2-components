@@ -1,0 +1,13 @@
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+YouTube_video_ID = TextField
+-->
+{% endcomment %}
+
+{% addtoblock "css" %}{% endaddtoblock %}
+
+<p class="full_width embed_wrapper ratio_16-9">
+    <iframe src="https://www.youtube.com/embed/{{ YouTube_video_ID }}?rel=0&amp;showinfo=0" frameborder="0" allowfullscreen></iframe>
+</p>

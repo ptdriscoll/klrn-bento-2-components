@@ -1,0 +1,48 @@
+'''
+REQUIRED: unique_id
+REQUIRED: image_320x75
+REQUIRED: link_href
+
+This Smart Snippet will add a button with a link to the right rail. Each button on the website must have a unique ID to avoid code conflicts between them.  
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+unique_id = TextField
+image_320x75 = TextField
+link_href = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style></style>
+{% endaddtoblock %}
+
+
+{% if unique_id and image_320x75 and link_href %}
+<div class="text-plugin clearfix box" style="display: none;">
+    <div id="klrn_button_{{unique_id}}">
+  
+    <a id="klrn_button_link" href="{{link_href}}">
+      <img id="klrn_button_image" src="{{image_320x75}}" title="" alt="">
+    </a>     
+
+  </div>
+</div>
+{% endif %}
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+
+    (function() {
+        var target = document.getElementById('klrn_button_{{unique_id}}');
+        if (!target) return;
+        target.parentNode.style.display = 'block';        
+    }());
+
+</script>
+{% endaddtoblock %}

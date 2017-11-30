@@ -1,0 +1,228 @@
+'''
+REQUIRED: 1_image_src
+REQUIRED: 1_tile_name
+1_link_href defaults to no link
+1_tile_label defaults to sponsor
+
+This Smart Snippet will run one to four image tiles with links. Each image tile must be 180px by 180px. The first tile position must be occupied for anything to run. The snippet also implements event tracking in the Google Analytics account installed sitewide.
+'''
+
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+1_tile_name = TextField
+1_image_src = TextField
+1_link_href = TextField
+1_tile_label = TextField
+
+2_tile_name = TextField
+2_image_src = TextField
+2_link_href = TextField
+2_tile_label = TextField
+
+3_tile_name = TextField
+3_image_src = TextField
+3_link_href = TextField
+3_tile_label = TextField
+
+4_tile_name = TextField
+4_image_src = TextField
+4_link_href = TextField
+4_tile_label = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style>
+	#klrn_schedule_page_sponsors .row-fluid { text-align: left; }
+    #klrn_schedule_page_sponsors p { display: inline-block; margin-bottom: 6px; }
+    #klrn_schedule_page_sponsors img { margin: 0; border: 1px solid #ddd; } 
+    #klrn_schedule_page_sponsors p span { 
+        font-size: 10px; text-align: right; display: block; text-transform: uppercase; 
+    }
+    #klrn_schedule_page_sponsors .row-fluid .span3 { max-width: 180px; }
+    @media (max-width: 960px) {
+        #klrn_schedule_page_sponsors .row-fluid .span3 { 
+        	float: left !important; 
+        	width: 23% !important;         	
+        	margin-left: 2.6% !important; 
+        }  
+        #klrn_schedule_page_sponsors .row-fluid .span3:first-child { 
+            margin-left: 0 !important; 
+        }
+	}
+    @media (max-width: 480px) {
+        #klrn_schedule_page_sponsors .row-fluid .span3 { 
+        	width: 47.6% !important; 
+        	margin-left: 4.5% !important;
+        } 
+        #klrn_schedule_page_sponsors .row-fluid .span3:first-child { 
+            margin-left: 0 !important; 
+        }
+		#klrn_schedule_page_sponsors .row-fluid .span3.third_child { 
+            margin-left: 0 !important; 
+        }
+	}
+    @media (max-width: 320px) {
+        #klrn_schedule_page_sponsors { 
+        	padding-right: 4% !important; 
+        	padding-left: 4% !important; 
+        }   
+        #klrn_schedule_page_sponsors .row-fluid .span3 { 
+        	width: 44.5% !important; 
+        	margin-left: 5% !important;
+        }
+	}   
+</style>
+{% endaddtoblock %}
+
+
+{% if 1_tile_name %}
+<div id="klrn_schedule_page_sponsors" class="text-plugin clearfix box">
+<div class="row-fluid">    
+    
+	<div class="span3">
+        <p>
+            {% if 1_link_href %}
+            <a id="klrn_schedule_page_sponsor_1" href="{{ 1_link_href }}">
+                <img class="" src="{{ 1_image_src }}" alt="{{ 1_tile_name }}">
+            </a>
+            {% else %}
+            <img class="" src="{{ 1_image_src }}" alt="{{ 1_tile_name }}">
+            {% endif%}
+            <span>{{ 1_tile_label|default:'SPONSOR' }}</span>
+        </p>
+	</div><!--span-->
+    
+    
+    {% if 2_tile_name %}    
+	<div class="span3">
+        <p>
+            {% if 2_link_href %}
+            <a id="klrn_schedule_page_sponsor_2" href="{{ 2_link_href }}">
+                <img class="" src="{{ 2_image_src }}" alt="{{ 2_tile_name }}">
+            </a>
+            {% else %}
+            <img class="" src="{{ 2_image_src }}" alt="{{ 2_tile_name }}">
+            {% endif%}
+            <span>{{ 2_tile_label|default:'SPONSOR' }}</span>
+        </p>
+	</div><!--span-->
+    {% endif %}    
+    
+    
+    {% if 3_tile_name %}    
+	<div class="span3 third_child">
+        <p>
+            {% if 3_link_href %}
+            <a id="klrn_schedule_page_sponsor_3" href="{{ 3_link_href }}">
+                <img class="" src="{{ 3_image_src }}" alt="{{ 3_tile_name }}">
+            </a>
+            {% else %}
+            <img class="" src="{{ 3_image_src }}" alt="{{ 3_tile_name }}">
+            {% endif%}
+            <span>{{ 3_tile_label|default:'SPONSOR' }}</span>
+        </p>
+	</div><!--span-->
+    {% endif %}  
+    
+    
+    {% if 4_tile_name %}    
+	<div class="span3">
+        <p>
+            {% if 4_link_href %}
+            <a id="klrn_schedule_page_sponsor_4" href="{{ 4_link_href }}">
+                <img class="" src="{{ 4_image_src }}" alt="{{ 4_tile_name }}">
+            </a>
+            {% else %}
+            <img class="" src="{{ 4_image_src }}" alt="{{ 4_tile_name }}">
+            {% endif%}
+            <span>{{ 4_tile_label|default:'SPONSOR' }}</span>
+        </p>
+	</div><!--span-->
+    {% endif %}   
+   
+    
+</div><!--row-->
+</div><!--text-plugin-->
+{% endif %}
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+//ready and resize     
+(function ($, undefined) {
+    var child = document.getElementById('klrn_schedule_page_sponsors');
+    if (!child) return;
+	var parent = document.querySelector('.page-content'),
+		schedule = document.getElementById('schedules-container').parentNode,
+		isMobile;
+	var getScreenSize = function() { return Modernizr.mq('(max-width: 599px)') ? true : false; }
+	var	saveScreenSize = function() { return isMobile = getScreenSize(); }
+	$(document).ready(function () {
+		if (isMobile) {
+			parent.appendChild(child); 
+		}			
+	}); 
+	$(window).resize(function () {
+        if (!child) return;
+		if (isMobile !== getScreenSize()) {
+			saveScreenSize();
+			if (isMobile) parent.appendChild(child);
+			else parent.insertBefore(child, schedule);
+			console.log(isMobile);			
+		}
+	});    
+})(jQuery); 
+    
+//track events
+(function() {
+	//get page
+	var page = location.pathname;
+    var outLink = function(link) {
+        if (link.indexOf('/') !== 0 && link.indexOf('klrn.org') === -1) return link;
+        else return false;
+    }
+    var outLink1 = outLink( '{{1_link_href}}' ), 
+        outLink2 = outLink( '{{2_link_href}}' ), 
+        outLink3 = outLink( '{{3_link_href}}' ), 
+        outLink4 = outLink( '{{4_link_href}}' );
+
+	//set event tracking properties
+	var events = [
+		{ 'target': document.getElementById('klrn_schedule_page_sponsor_1'),      	  
+		  'eventCategory': outLink1 ? 'Outbound Links' : 'Inbound Links',       
+      	  'outboundLink': outLink1, 'eventAction': 'Clicks', 
+		  'eventLabel': '{{1_tile_name}}', 'page': page },
+		{ 'target': document.getElementById('klrn_schedule_page_sponsor_2'), 
+		  'eventCategory': outLink2 ? 'Outbound Links' : 'Inbound Links', 
+      	  'outboundLink': outLink2, 'eventAction': 'Clicks', 
+		  'eventLabel': '{{2_tile_name}}', 'page': page },
+		{ 'target': document.getElementById('klrn_schedule_page_sponsor_3'), 
+		  'eventCategory': outLink3 ? 'Outbound Links' : 'Inbound Links', 
+      	  'outboundLink': outLink3, 'eventAction': 'Clicks', 
+		  'eventLabel': '{{3_tile_name}}', 'page': page },
+		{ 'target': document.getElementById('klrn_schedule_page_sponsor_4'), 
+		  'eventCategory': outLink4 ? 'Outbound Links' : 'Inbound Links', 
+          'outboundLink': outLink4, 'eventAction': 'Clicks', 
+		  'eventLabel': '{{4_tile_name}}', 'page': page }
+	];	
+	
+	//check for klrn.trackEvents, invoke tracking when ready 
+	var checkOnLoad = function checkOnload() {
+        var checkKLRN = typeof klrn === 'undefined';
+        if (checkKLRN || (!checkKLRN && typeof klrn.trackEvents === 'undefined')) {
+			setTimeout(checkOnload, 50);
+		}
+		else {		
+			klrn.trackEvents(events);		
+		}	
+	}
+	checkOnLoad();	
+}());    
+    
+</script>
+{% endaddtoblock %}

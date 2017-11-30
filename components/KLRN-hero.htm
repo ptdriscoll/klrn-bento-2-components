@@ -1,0 +1,137 @@
+{% load sekizai_tags filertags %}
+{% load filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables 
+
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style>
+
+    #klrn_hero { 
+        position: relative;
+        z-index: 3;
+        margin-bottom: 20px;
+		border-bottom: 1px solid #ddd;
+		-webkit-box-shadow: 0px 0px 5px #ddd;
+	   	-moz-box-shadow: 0px 0px 5px #ddd;	            
+        box-shadow: 0px 0px 5px #ddd; 
+        text-align: center;        
+        background-color: #BAD9EE;
+    }
+    #klrn_hero.container.content-wrapper.full_width { width: auto; }
+    #klrn_hero article .row-fluid .container { padding: 0 15px; }
+	#klrn_hero h1, #klrn_hero p, #klrn_hero a  { color: #F7F9F9; }
+    #klrn_hero article {
+        background: url('http://pbs.klrn.org/___test/image/keyboard.jpg') 50% 0 no-repeat;
+    	background-size: cover;
+        padding: 35px 0 60px;
+        opacity: 0.89; 
+        filter: alpha(opacity=89); /* For IE8 and earlier */
+    }
+    #klrn_hero article .row-fluid.title {
+        margin-bottom: 10px;
+    	padding: 4px 0 15px;
+        background-color: rgba(0,0,0,0.0);        
+    }
+    #klrn_hero article h1 {
+        margin: 0;
+        text-align: center;
+        font-size: 45px;
+        font-weight: bold;
+        line-height: 140%;
+    }
+    #klrn_hero article .row-fluid.body {
+        margin-bottom: 25px;
+    	padding: 4px 0 15px;
+        background-color: rgba(0,0,0,0.0);
+    }
+    #klrn_hero article p {
+        margin: 0;
+        font-size: 22px;
+        line-height: 160%;
+    }
+    #klrn_hero article a {
+        display: inline-block;
+        padding: 12px 25px 16px;
+        font-size: 30px;
+		border: 3px solid #F7F9F9;    	
+        background-color: rgba(0,0,0,0.0); 
+        line-height: 150%;
+    }
+    #klrn_hero article a:hover {
+        margin: 0;
+        color: #fff;
+		border: 3px solid #fff;
+        text-decoration: none;         
+    }
+    @media (min-width: 769px) {  
+    	#klrn_hero article { background-attachment: fixed; }
+	}
+    @media (max-width: 480px) {
+	    #klrn_hero .container { padding: 0 5px; }
+	}
+    @media (max-width: 769px) {  
+    	#klrn_hero article h1 { font-size: 32px; }
+    	#klrn_hero article p { font-size: 18px; }
+    	#klrn_hero article a { font-size: 20px; }
+    	#klrn_hero article .row-fluid.title {	padding: 10px 0 10px; }
+		#klrn_hero article .row-fluid.body { margin-bottom: 20px;	padding: 10px 0 10px; }
+	}  
+    @media (max-width: 960px) {  
+    	#klrn_hero { margin-bottom: 0; }
+	}
+    
+    
+</style>
+{% endaddtoblock %}
+
+
+<section id="klrn_hero" class="container content-wrapper full_width" style="display: none;">
+	<article>
+        
+		<div class="row-fluid with_background title">
+			<div class="container">
+                <h1>Help Bring Back News That Matters</h1>
+            </div><!-- .container -->
+        </div><!-- .row -->
+        
+		<div class="row-fluid with_background body">
+			<div class="container">
+                <p>American journalism isn't what is used to be. Many of today's important stories don't get covered like they should. The KLRN News & Public Affairs Fund is moving to fill the gaps.</p>
+            </div><!-- .container -->
+        </div><!-- .row -->   
+        
+		<div class="row-fluid">
+			<div class="container">
+                <a href="https://klrn.secureallegiance.com/klrn/WebModule/Donate.aspx?P=FUNDPA&PAGETYPE=PLG&CHECK=kOKdgDGD917nOZeaOsciXRiCxtaFReuS">Support the News Fund &raquo;</a>
+            </div><!-- .container -->
+        </div><!-- .row -->         
+        
+	</article>
+</section>
+
+
+
+{% addtoblock "js" %}
+<script type="text/javascript"> 
+(function() {        
+    
+   	var header = document.getElementsByTagName('header')[0],
+        parent = header ? header.parentNode : '';
+    	nextElem = header ? header.nextSibling : '',
+        hero = document.getElementById('klrn_hero'),
+        extraHeader = document.querySelector('.extra-header');    
+    
+    if (!header || !parent || !nextElem || !hero) return;
+	if (extraHeader) extraHeader.style.display = 'none';  
+    header.style.marginBottom = '0';
+    parent.insertBefore(hero, nextElem);
+	hero.style.display = 'block'; 
+        
+}());
+</script> 
+{% endaddtoblock %}

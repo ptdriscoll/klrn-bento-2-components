@@ -1,0 +1,121 @@
+'''
+REQUIRED: playlist_id_from_URL
+max_videos_to_show defaults to '3'
+play_in_modal defaults to 'no'
+
+When opting to play videos in the drop-down modal, make sure the KLRN-modal-previewVideo Smart Snippet is included in the page, or in a page higher in the hierarchy so that it can be inherited. 
+
+Displays first 69 characters of video description, and inserts "..." if the first line is longer than that. Also, removes "Topics:" if that's at the beginning of the description. 
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+playlist_id_from_URL = TextField
+max_videos_to_show = Select|values=1,2,3,4,5,6,7
+play_in_modal = Select|values=Yes,No
+carousel_css_id = TextField
+carousel_css_classes = TextField
+-->
+{% endcomment %}
+
+<div class="row-fluid">
+	<div class="span12">
+{% include '/filer_public/KLRN/templates/modal-video.htm' %}
+		<div id="{{ carousel_css_id|default:'YTPlaylistCarousel' }}" class="youtube playlist carousel slide">
+			<!-- Carousel items -->
+			<div id="youtube-playlist-carousel-inner" class="carousel-inner"></div>
+            
+            {% if '1' not in max_videos_to_show %}
+			<!-- Carousel nav -->
+			<a class="carousel-control left" href="#{{ carousel_css_id|default:'YTPlaylistCarousel' }}" data-slide="prev"></a>
+			<a class="carousel-control right" href="#{{ carousel_css_id|default:'YTPlaylistCarousel' }}" data-slide="next"></a>
+            {% endif %}
+            
+		</div>
+</div><!--span-->
+</div><!--row-->
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+    
+function displayYTPlaylistCarousel(data) {
+    //console.log(data);
+    var useModal = ('{{ play_in_modal|default:'No' }}' === 'Yes') 
+    	? true : false;
+	var targetInner = document.getElementById('youtube-playlist-carousel-inner');
+	var i, length = data.items.length, item;
+	var thePlayer, videoID, videoURL, title, descriptionArray, description, dataAttributes;
+	var outputInner = '', activeInner;
+
+	for (i = 0; i < length; i++) {
+		item = data.items[i].snippet;
+		videoID = item.resourceId.videoId;
+		videoURL = (useModal) ? '' : 'href="' + 'https://www.youtube.com/watch?v=' + videoID + '" ';
+		image = 'http://img.youtube.com/vi/' + videoID + '/mqdefault.jpg';
+		title = item.title;
+		description = item.description.split('\n')[0];
+        if (description.toLowerCase().indexOf('topics: ') === 0) description = description.slice(8);
+		if (description.length > 69) {
+			description = description.slice(0,66); 
+			description = description.slice(0, description.lastIndexOf(' ')) + ' ...';
+		}
+		dataAttributes = '';
+		activeInner = (i === 0) ? 'active item' : 'item';
+
+		if (useModal) {
+			dataAttributes = 'data-target="#previewVideo"'
+										 + 'data-toggle="modal"'
+										 + 'data-klrn-src="http://www.youtube.com/embed/' + videoID
+										 + '/?rel=0&enablejsapi=1&version=3&autohide=1&showinfo=0&html5=1"'
+										 + 'data-klrn-type="text/html"'
+										 + 'data-klrn-class="youtube-player" '
+		}
+
+		outputInner += '<div class="' + activeInner + '" style="background-color: #272727;">'
+								+ '<a ' + videoURL + dataAttributes + 'style="display: block; margin:auto auto;">'
+								+ '<img src="' + image + '" alt="' + title + '"'
+								+ 'title="' + title  + '" style="width: 100%; height: auto; display:block; margin: auto auto; padding: 0px 0px">'
+								+ '</a>'
+								+ '<div class="carousel-caption">'
+								+ '<a ' + videoURL + dataAttributes + '>'
+								+ '<h2><b>' + title + '</b></h2>'
+								+ '</a>'
+								+ '<p>' + description + '</p>'
+								+ '</div></div>';
+	}
+	targetInner.innerHTML = outputInner;
+}
+</script>  
+
+<script src="https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults={{ max_videos_to_show|default:'3' }}&playlistId={{ playlist_id_from_URL }}&key=AIzaSyDraaM_dJplqR3JbRtmx-HSIMfIZHTqXV4&callback=displayYTPlaylistCarousel" type="text/javascript"></script>
+
+<script type="text/javascript"> 
+(function ($, undefined) {
+    $(document).ready(function(){
+        
+    	var cacheCarousel = $('#{{ carousel_css_id|default:'YTPlaylistCarousel' }}');
+        var useModal = ('{{ play_in_modal|default:'No' }}' === 'Yes') 
+    		? true : false;
+        
+        cacheCarousel.carousel();
+        
+        if (useModal) {
+            //pause carousel when modal opens
+            $('[data-target="#previewVideo"]').on('click', function () {
+                cacheCarousel.carousel('pause');
+            });    
+    
+            //restart carousel when modal closes
+            $('#previewVideo').on('hidden.bs.modal', function () {
+                cacheCarousel.carousel('cycle');
+            });  
+        }
+	});    
+})(jQuery);  
+
+
+</script> 
+{% endaddtoblock %}

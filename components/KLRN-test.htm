@@ -1,0 +1,59 @@
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+
+text = TextField
+
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style></style>
+{% endaddtoblock %}
+
+<div class="row-fluid">
+	<div class="span12">
+		<div id="" class="">  
+            <p>TEST: {{ text }}</p>
+		</div>
+  </div>
+</div>   
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+(function() { 
+    
+    //var msg = '{{ text }}';  
+    //console.log(msg + ' is running');
+    
+    
+    
+    
+    console.log('TEST 2 IS RUNNING');
+    
+    var callback = function() { console.log('CALLBACK RAN'); }
+    
+    
+    
+    //check for klrn.trackEvents, invoke tracking when ready 
+    var checkOnLoad = function checkOnload() {
+      var checkKLRN = typeof klrn === 'undefined';
+      if (checkKLRN || (!checkKLRN && typeof klrn.trackEvents === 'undefined')) {
+      setTimeout(checkOnload, 50);
+      }
+      else {	
+          
+        $('#sidebar_ad').click(klrn.createFunctionWithTimeout(callback, 1000));	
+                               
+      }	
+    }
+    checkOnLoad();
+    
+
+  	
+}());    
+</script>
+{% endaddtoblock %}

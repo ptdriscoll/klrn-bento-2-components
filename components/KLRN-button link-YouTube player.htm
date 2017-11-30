@@ -1,0 +1,17 @@
+'''
+REQUIRED: video_link
+REQUIRED: button_text
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+button_text = TextField
+video_id = TextField
+-->
+{% endcomment %}
+
+{% if video_id and button_text %}
+<a data-target="#previewVideo" data-toggle="modal" data-klrn-src="http://www.youtube.com/embed/{{ video_id }}/?rel=0&amp;enablejsapi=1&amp;version=3&amp;autohide=1&amp;showinfo=0&amp;html5=1" data-klrn-type="text/html" data-klrn-class="youtube-player" class="klrn_btn primary">{{ button_text }}</a>
+{% endif %}

@@ -1,0 +1,62 @@
+'''
+Use this snippet ONLY ONCE per page, or once sitewide. This will load a YouTube or COVE video into a dropdown modal from any link or button that has these attributes added:
+    data-target="#previewVideo" 
+    data-toggle="modal" 
+    data-klrn-src="... whatever the video embed code is ..." 
+'''
+
+{% load sekizai_tags filertags %}
+
+
+{% addtoblock "css" %}
+<style>
+    #previewVideo .modal-body { max-height: none; }
+</style>
+{% endaddtoblock %}
+
+
+<div class="modal hide fade" id="previewVideo" tabindex="-1" role="dialog" aria-labelledby="modal_title_previewVideo" aria-describedby="modal_body_previewVideo" aria-hidden="true">
+	<div id="modal_body_previewVideo" class="modal-body">
+				<div id="video_embed_wrapper" class="embed_wrapper ratio_16-9">
+					<iframe id="previewVideo_iframe" src="" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" seamless allowfullscreen></iframe>				
+				</div>
+	</div><!--modal-body-->
+	<div class="modal-footer">
+			<button type="button" class="btn btn-default" data-dismiss="modal" style="font-size: 14px;">Close</button>
+	</div><!--modal-footer-->
+</div><!--modal previewVideo-->
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">     
+    
+    //show video handler available for inline use to preserve it when elements copied
+    var klrn = klrn || {};
+    klrn.previewVideo = function(e) {
+        var iframe = document.getElementById('previewVideo_iframe');
+        iframe.src = e.getAttribute('data-klrn-src');
+    };     
+    
+(function ($, undefined) {
+    $(document).ready(function(){  
+        
+        //show video when modal opens, exclude classes marked inline only
+        $('[data-target="#previewVideo"]').not('.inline_onclick_only').on('click', function () {
+            var iframe = document.getElementById('previewVideo_iframe');
+            iframe.src = this.getAttribute('data-klrn-src');
+        });
+    
+        //reset video when modal closes
+        $('#previewVideo').on('hidden.bs.modal', function () {
+            var iframe = this.getElementsByTagName('iframe')[0];
+			var src = iframe.src;
+			iframe.src = '';
+			iframe.src = src;
+        });        
+	});  
+    
+    document.getElementsByTagName('body')[0].appendChild(document.getElementById('previewVideo'));
+    
+})(jQuery);  
+</script> 
+{% endaddtoblock %}

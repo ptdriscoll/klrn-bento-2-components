@@ -1,0 +1,94 @@
+'''
+REQUIRED:
+    Tab_1 and Tab_2:
+        Enter a label name for each tab.
+    Tab_content_class_1 and Tab_content_class_2: 
+        Enter a class name to content on the page that each tab will control.
+        This works best when content blocks are similar and placed right below tab box.
+        Make sure each content block's tab-related class name is unique to the page.
+
+OPTIONAL:
+    Tab_3 and Tab_content_class_3 for a third tab and content block.
+    Title: Tabs can work by themselves or with a title.
+    Unique_id: You will need this if you have more than one tab box on the page
+    Classes: For custom options.
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+tab_1 = TextField
+tab_2 = TextField
+tab_3 = TextField
+tab_content_class_1 = TextField
+tab_content_class_2 = TextField
+tab_content_class_3 = TextField
+title = TextField
+unique_id = TextField
+classes = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}{% endaddtoblock %}
+
+
+{% if tab_1 and tab_2 and tab_content_class_1 and tab_content_class_2 %}
+<div id="klrn_tab_box_{{ unique_id }}" 
+    class="klrn_tab_box {% if not title %}no_tab_box_title {% endif %}text-plugin clearfix box">    
+
+    <ul class="nav nav-tabs">    
+        
+        <li class="active"><a href="#{{ tab_content_class_1 }}" data-toggle="tab">{{ tab_1 }}</a></li>
+        <li><a href="#{{ tab_content_class_2 }}" data-toggle="tab">{{ tab_2 }}</a></li>
+        
+        {% if tab_3 and tab_content_class_3 %}
+        <li><a href="#{{ tab_content_class_3 }}" data-toggle="tab">{{ tab_3 }}</a></li>            
+        {% endif %}  
+        
+    </ul>
+    
+    <div class="title text-plugin clearfix box"> 
+    {% if title %}        
+        <h2>{{ title }}</h2>    
+    {% endif %}
+    </div>
+
+</div><!-- .text-plugin -->
+{% endif %}
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+    
+    (function ($, undefined) {
+        $(document).ready(function(){  
+            
+            var tabBox = $('#klrn_tab_box_{{ unique_id }}');
+            var tabContent1 = ('{{ tab_content_class_1 }}') ? $('.{{ tab_content_class_1 }}') : false;
+            var tabContent2 = ('{{ tab_content_class_2 }}') ? $('.{{ tab_content_class_2 }}') : false;
+            var tabContent3 = ('{{ tab_content_class_3 }}') ? $('.{{ tab_content_class_3 }}') : false;
+           
+            //check to see if tab box is available and at least two tab content classes exist 
+            if (tabBox.length < 1 || tabContent1.length < 1 || tabContent2.length < 1) return;
+            
+            //hides all non-active tab box content
+            tabContent2.hide();
+            if (tabContent3) tabContent3.hide();
+            
+            
+            //tab click event hides all content and then shows only content associated with tab 
+            $('#klrn_tab_box_{{ unique_id }} a').click(function (e) {
+                e.preventDefault();
+                var show = $(this).attr("href").replace('#', '.');
+                tabContent1.hide();
+                tabContent2.hide();
+                if (tabContent3) tabContent3.hide();
+                $(show).fadeIn();
+            })      
+        });        
+    })(jQuery);
+    
+</script>
+{% endaddtoblock %}

@@ -1,0 +1,1041 @@
+{% load sekizai_tags filertags %}
+{% addtoblock "js" %}
+<!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>-->
+<script type="text/javascript" src="{{ '/KLRN/js/klrn.js'|filerfile }}"></script> 
+<script type="text/javascript" src="{{ '/KLRN/js/lib/ScrollMagic.min.js '|filerfile }}"></script>
+{% endaddtoblock %}
+{% addtoblock "js" %}
+<script type="text/javascript"> 
+
+//start namepsace to add modules to klrn object  
+(function (exports) { 
+    
+//cache global variables and dom grabs
+exports.cache = (function() {
+	var headerTag = document.getElementsByTagName('header')[0],
+		bodyTag = document.getElementsByTagName('body')[0],
+		pageContent = document.querySelector('.page-content'),
+		rightRail = document.querySelector('.right-rail'),
+		footerTag = document.getElementsByTagName('footer')[0], 
+		passportTheme = bodyTag.className.indexOf('explorer')!==-1 
+									&& bodyTag.className.indexOf('passport')!==-1,
+        floatedImages = []; //global cache for managing p tags with floated images 									
+		return {
+			headerTag: headerTag,
+			bodyTag: bodyTag,
+			pageContent: pageContent,
+			rightRail: rightRail,
+			footerTag: footerTag, 
+			passportTheme: passportTheme,
+            floatedImages: floatedImages
+		}
+}());
+    
+//make sure js widths match css widths
+exports.screenSize = klrn.screenSize || (function() {
+	var screenSize,									
+		getCurrent = function() { 
+			if (Modernizr.mq('(min-width: 769px)')){
+						return 'desktop';
+					}
+					else if (Modernizr.mq('(min-width: 481px)')){
+						return 'tablet';
+					}
+					return 'mobile';
+		},
+		saveCurrent = function() {
+			screenSize = getCurrent();
+            return screenSize;
+		},
+		getSaved = function() {
+			return screenSize;
+		}
+		
+		return {
+			getCurrent: getCurrent,
+			saveCurrent: saveCurrent,
+			getSaved: getSaved
+		}
+}());
+    
+//debounce from david walsh and underscore 
+//http://davidwalsh.name/javascript-debounce-function
+//wait sets fire rate, immediate triggers func call on leading edge rather than trailing
+exports.debounce = function(func, wait, immediate) {
+	var timeout;
+	return function() {
+		var context = this, args = arguments;
+		var later = function() {
+			timeout = null;
+			if (!immediate) func.apply(context, args);
+		};
+		var callNow = immediate && !timeout;
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+		if (callNow) func.apply(context, args);
+	};
+};     
+    
+//remove image floats when text too narrow, add back when text wider    
+exports.manageFloatedImages = exports.debounce(function() {
+    var imageWrappers = exports.cache.floatedImages,	
+		i, length = imageWrappers.length, minTextWidth, isFloated;
+    if (length < 1) return;
+	for (i=0; i<length; i++) {
+		var parent = imageWrappers[i];
+		var img = imageWrappers[i].firstChild; 
+		minTextWidth = img.clientWidth > 135 ? 197 : 157;
+		noFloatAdded = parent.className.indexOf('klrn_remove_float') === -1 ? false : true;
+		if (parent.clientWidth - img.clientWidth < minTextWidth && !noFloatAdded) {
+			parent.className += ' klrn_remove_float';
+		}
+		else if (parent.clientWidth - img.clientWidth >= minTextWidth && noFloatAdded) {
+			parent.className = parent.className.replace(/\s*klrn_remove_float/, '');
+		}
+	} 
+}, 250);   
+    
+exports.createFunctionWithTimeout = function(callback, opt_timeout) {
+  var called = false;
+  var fn = function() {
+    if (!called) {
+      called = true;      
+      callback();
+    }
+  }
+  setTimeout(fn, opt_timeout || 1000);  
+  return fn;
+}    
+
+//invoke Google Analytics event tracking per each array of event objects    
+exports.trackEvents = function(events) {	
+
+	//add event handler that also works with <ie9
+	var addListener = function addListener(element, type, callback) {
+		if (element.addEventListener) element.addEventListener(type, callback);
+		else if (element.attachEvent) element.attachEvent('on' + type, callback); 
+	}
+
+	var i, length = events.length;	
+
+	for (i=0; i<length; i++) { 
+		if (!events[i].target || !events[i].eventCategory || !events[i].eventAction) continue;
+
+        (function() {
+            var options = {};
+            var outboundLink = events[i].outboundLink ? events[i].outboundLink : false;
+            
+            options = { 'hitType': 'event' };
+            options.eventCategory = events[i].eventCategory;
+            options.eventAction = events[i].eventAction;
+            options.eventLabel = events[i].eventLabel ? events[i].eventLabel : 'No label set';
+            if (events[i].page) options.page = events[i].page;
+            if (events[i].nonInteraction) options.nonInteraction = events[i].nonInteraction;
+
+            //set event
+            addListener(events[i].target, 'click', function() {
+                //prevent click default for outbound links, so GA has chance to record event 
+                if (outboundLink) {
+                    event.preventDefault ? event.preventDefault() : event.returnValue = false;
+                    options.hitCallback = exports.createFunctionWithTimeout(function() {
+                        document.location.href = outboundLink;
+                    });
+                }
+                ga('send', options);                
+            });            
+    	})();     
+	}
+        
+}; 
+
+//module to swap parent divs for .promos so mobile shows individual boxes for each
+//used with browser width and resize event
+exports.swapPromoWrappers = (function() {
+	var wrappers = (klrn.cache.pageContent) 
+								 ? klrn.cache.pageContent.querySelectorAll('.promo-container.horizontal')
+								 : document.querySelectorAll('.promo-container.horizontal'), 
+		saveCopies = [], //to store copies of original wrappers      
+		saveParents = [], //to store references to wrapper parents
+		saveFragments = [], //to store doc fragments of newly wrapped elements 
+		initHasRun = false;
+		
+	var	init = function init() {
+			var i;			
+			for (i=0;i<wrappers.length;i++) { //loop through each wrapper
+					var fragment = document.createDocumentFragment(); //create fragment to temporarily store reformatting 
+					var wrapper = wrappers[i];
+						
+					saveCopies.push(wrapper.cloneNode(true)); //save each wrapper for future toggling
+					saveParents.push(wrapper.parentNode); //save each wrapper parent for inserting references
+					
+					while(wrapper.firstChild) { //loop through each wrapper child
+						var toWrap = wrapper.firstChild;
+						if (toWrap.className && toWrap.className.indexOf('promo') !== -1) { //give each .promo a new wrapper 
+							var newWrapper = document.createElement('div');
+							var classAttribute = document.createAttribute('class');
+							
+							classAttribute.value = wrapper.className; 
+							newWrapper.setAttributeNode(classAttribute); //copy old wrapper classes to new wrapper
+							if (toWrap.nextSibling) { //insert new wrapper
+								toWrap.parentNode.insertBefore(newWrapper, toWrap.nextSibling);							
+							}
+							else toWrap.parentNode.appendChild(newWrapper);
+							newWrapper.appendChild(toWrap); //move child into new wrapper 
+					}//end if	
+					
+					fragment.appendChild(wrapper.firstChild);	//move each child out of old wrapper			
+				}//end while
+				
+			saveFragments.push(fragment.cloneNode(true)); //save copy of reformatted element with new wrappers	
+			wrapper.parentNode.replaceChild(fragment, wrapper); //get rid of old wrapper, which is now empty 
+			}//end for
+			
+			initHasRun = true;
+	}//end init
+	
+	var toggle = function toggle(screenSize) {	
+		var mobile = screenSize !== 'desktop';
+        
+    if (wrappers.length < 1) return; 
+		if (mobile && !initHasRun) {
+			init();
+			return;
+		}
+		
+		var i;		
+		for (i=0;i<saveParents.length;i++) { //loop through each cached parent
+		var saveParent = saveParents[i];
+		
+			while (saveParent.firstChild) { //remove each child from parent
+				saveParent.removeChild(saveParent.firstChild);
+			}
+			if (mobile) { //append original node back, mobile version
+				var freshCopy = saveFragments[i].cloneNode(true);
+				saveParent.appendChild(saveFragments[i]); 
+				saveFragments[i]	= freshCopy;
+			}
+			else saveParent.appendChild(saveCopies[i]); //append original node back, desktop version
+		} //end for
+	}
+	
+	return {toggle: toggle}
+}()); 
+    
+}(klrn)); //end namespace to add modules to klrn object
+    
+//ready, load and resize     
+    (function ($, undefined) {  
+    klrn.target = '';
+    var navOffset = ($(window).width() > 960) ? 66 : 15;
+    var setNavOffset = klrn.debounce(function() {
+    	navOffset = ($(window).width() > 960) ? 66 : 15;
+    }, 250);
+    var hashTarget = (function() {
+        var hash = window.location.hash;
+		if (hash && window.location.hash.indexOf('#page=') === -1) {
+				var target = $(window.location.hash.replace('link-','')); 
+				target = target.length ? target : $('[name="' + hash.slice(1) +'"]');
+				if (!target.length) return false; 
+				window.scrollTo(0, 0); 
+        return target;   
+		}		
+	}());	    
+    
+    $(document).ready(function() {        
+      	var screenSize = klrn.screenSize.getSaved() || klrn.screenSize.saveCurrent();
+        if (klrn.cache.passportTheme && screenSize !== 'desktop') {
+            klrn.swapPromoWrappers.toggle(screenSize);
+        }
+        
+        //load KLRN logo for print styles 
+        var logoPrint = document.createElement('img');
+        logoPrint.src = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/KLRN_logo_2015_print.png';
+        logoPrint.id = 'logo_print';
+        document.getElementById('station-logo').appendChild(logoPrint);
+    
+  	$(window).load(function() {  
+		//animate and position anchor links in url 
+		if (hashTarget) {
+			setTimeout( function() { 
+				$('html, body').animate({
+					scrollTop: hashTarget.offset().top - navOffset
+				}, 1000, 'swing');  
+					document.querySelector('.main-menu').style.top = '0'; //fixes refresh issue in Chrome
+			}, 500);
+		} 
+	}); 
+   
+    $(window).on('resize orientationchange', function() {
+		if (klrn.cache.passportTheme 
+            && klrn.screenSize.getSaved() !== klrn.screenSize.getCurrent()) {
+           	klrn.screenSize.saveCurrent();
+           	klrn.swapPromoWrappers.toggle(klrn.screenSize.getSaved());
+        }
+        setNavOffset();
+        klrn.manageFloatedImages(); 
+    });     
+   
+	//animate scrolling to in-page anchor links
+    //from https://css-tricks.com/snippets/jquery/smooth-scrolling/
+    $('a[href*=#]:not([href=#], [href^=#myCarousel], [href^=#YTPlaylistCarousel])')
+       	.click(function() {
+        if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') 
+            && location.hostname == this.hostname) {
+          var target = $(this.hash.replace('link-','')); 
+          target = target.length ? target : $('[name="' + this.hash.slice(1) +'"]');
+          if (target.length) {
+    	      $('html,body').animate({
+        	      scrollTop: target.offset().top - navOffset
+              }, 1000, 'swing');
+           return false;
+           }
+         }
+      });
+        
+    });         
+    
+}(jQuery));    
+
+//add page name hierarchy as class names to body
+(function() {
+    var parts = document.location.pathname.replace(/^\/+|\/+$/g, '').split('/'),
+    	addClasses = '', i,
+        body = (klrn.cache.bodyTag) 
+    		? klrn.cache.bodyTag
+    		: document.getElementsByTagName('body')[0];
+    
+    if (!parts || body.length < 1 || !body) return;
+    if (parts.length === 1 && parts[0] === '') parts = ['home'];
+    
+    //exceptions
+    if (parts.indexOf('blogs') !== -1) parts.pop(); //remove individual blog post titles
+	if (parts.indexOf('hispanic-heritage-month') !== -1) parts.pop(); //don't add as class to body
+    
+    for (i=0;i<parts.length;i++) {
+        addClasses += ' ' + parts[i];	
+    } 
+    body.className += addClasses;
+}());
+    
+//add id to mobile donate button main parent div so it it can be targeted to just mobile and tablets
+(function() {
+ 	var mobileDonate = document.getElementById('klrn_mobile_donate');  
+    if (mobileDonate) mobileDonate.parentNode.parentNode.id = 'klrn_mobile_donate_parent_div';        
+}());
+    
+    
+//add classes to .promo and their parents for inner elements not used, so styles can be tweaked 
+(function() {
+ 	var promos = (klrn.cache.pageContent) 
+		? klrn.cache.pageContent.querySelectorAll('.promo')
+    	: document.querySelectorAll('.promo');
+    var channel, title, paragraph, details, addClasses, i, noTitle, noParagraph;
+    var checkForText = function(elem) {
+        if (!elem) return undefined;
+        elem = 'textContent' in elem ? elem.textContent : elem.innerText;
+        if (/\S/.test(elem)) return true;
+        return false;
+    };
+    
+    if (!promos || promos.length < 1) return;
+    for (i=0;i<promos.length;i++) { 
+        channel = promos[i].getElementsByTagName('h5')[0];
+        title = promos[i].getElementsByTagName('h3')[0];
+        paragraph = promos[i].getElementsByTagName('p')[0];
+        details = promos[i].querySelector('div.read-more');
+        addClasses = '';
+        
+        //check for elements and if they contain text and then add classes
+        noTitle = !title || !checkForText(title);
+        noParagraph = !paragraph || !checkForText(paragraph);        
+
+        if (!channel || !checkForText(channel)) addClasses += ' channel_none';
+        if (noTitle) addClasses += ' title_none';
+        if (noParagraph) addClasses += ' paragraph_none';
+        if (!details || !checkForText(details)) addClasses += ' details_none';        
+        if (noTitle && noParagraph && promos[i].parentNode.className.indexOf('content_none') === -1) {
+            promos[i].parentNode.className += 'content_none';
+        }
+        
+        promos[i].className += addClasses;        
+    }
+}());
+    
+//add classes to remove margins from each p tag that only contains an img
+//also check and remove floats when screen size gets too narrow    
+(function() {  
+	var i, minTextWidth, 
+	graphs = (klrn.cache.bodyTag) 
+    	? klrn.cache.bodyTag.getElementsByTagName('p')
+    	: document.getElementsByTagName('p'); 
+	
+    if (!graphs || graphs < 1) return;
+	for (i=0; i<graphs.length; i++) { 
+		if (graphs[i].innerHTML.indexOf('<img') !== -1
+				&& ((graphs[i].innerText !== undefined)  
+					? graphs[i].innerText.length < 1
+					: graphs[i].textContent.length < 1)) {
+			if ((graphs[i].innerHTML.indexOf('float: right;') !== -1)
+               || (graphs[i].innerHTML.indexOf('float: left;') !== -1)) {			
+				graphs[i].className += ' with_floated_image';
+				minTextWidth = graphs[i].firstChild.clientWidth > 135 ? 197 : 157
+				if (graphs[i].clientWidth - graphs[i].firstChild.clientWidth < minTextWidth) {
+					graphs[i].className += ' klrn_remove_float';
+				}					
+				klrn.cache.floatedImages.push(graphs[i]);	                
+            }            
+            else if (graphs[i].innerHTML.indexOf('width="') === -1
+                     || graphs[i].innerHTML.indexOf('width="640"') !== -1
+                     || graphs[i].innerHTML.indexOf('width="1280"') !== -1
+                     || graphs[i].innerHTML.indexOf('width="1920"') !== -1) {
+                graphs[i].className += ' full_width'; 
+            }
+		}			
+	}	
+}()); 
+    
+//hide each .carousel-caption when there is no h2 text or body text
+(function() {
+	var captions = document.querySelectorAll('.carousel-caption'),
+			i, length = captions.length, head = [], graph = [], headText, graphText; 
+
+	if (captions) {
+		for (i=0; i<length; i++) {
+			head = captions[i].getElementsByTagName('h2')[0];
+			graph = captions[i].getElementsByTagName('p')[0];
+			if (head) headText = (head.innerText !== undefined)	
+				? (head.innerText.replace(/\s+/g, '').length < 1)	
+				: (head.textContent.replace(/\s+/g, '').length < 1);
+			if (graph) graphText = (graph.innerText !== undefined)	
+				? (graph.innerText.replace(/\s+/g, '').length < 1)	
+				: (graph.textContent.replace(/\s+/g, '').length < 1);
+			
+			if (headText && graphText) captions[i].className += ' klrn_hide';
+		}
+	}
+}());    
+    
+//add an arrow to each link plugin text, if its not already manually added      
+(function() {
+	var links = (klrn.cache.bodyTag) 
+    	? klrn.cache.bodyTag.getElementsByTagName('span')
+    	: document.getElementsByTagName('span');
+    var i, check;
+    
+    if (!links || links < 1) return;
+	for (i=0;i<links.length;i++) {
+		if (links[i].className.indexOf('plugin_link') !== -1) {
+			check = links[i].getElementsByTagName('a')[0];
+			if (check.innerHTML.indexOf('»') !== -1 ) continue;
+			else check.innerHTML = check.innerHTML.replace(/^\s+|\s+$/g,'') + ' »' 
+		}	
+	}
+}());
+    
+//override element-level width set on social media icons - only in footer
+(function() {
+    var footer = klrn.cache.footerTag || document.getElementsByTagName('footer')[0];
+    var i, j; 
+    
+    if (footer) { var anchors = footer.getElementsByTagName('a') }    
+    if (!anchors || anchors < 1) return;
+	for (i=0;i<anchors.length;i++) {
+		if (anchors[i].className.indexOf('social-media-icon') !== -1) {
+			anchors[i].getElementsByTagName('img')[0].style.width = '32px';
+		}
+	}	
+}());  
+    
+//fade in body so loading doesn't look so jerky 
+(function() { 
+    if (!klrn.cache.passportTheme) return;
+    var checkOnLoad = function checkOnload() {
+        if (typeof jQuery === 'undefined') {
+            setTimeout(checkOnload, 50);
+        }
+        else {		
+            (function ($, undefined) {                
+                $('body').fadeTo(500, 1, function(){
+                    document.getElementsByTagName('html')[0].style.backgroundColor = '#F7F9F9';
+                });  
+                
+                //$(window).resize(function () {
+                //    $('.fake-bg').css('opacity', '1');
+                //});
+            })(jQuery);			
+        }	
+    }
+    checkOnLoad();
+}());   
+   
+//make menu sticky    
+(function() {
+    if (!klrn.cache.passportTheme) return;
+    //first fix PBS jQuery variable inconsistency
+    var $ = $ || jQuery;
+    //set up ScrollMagic
+    var controller = new ScrollMagic.Controller({
+        globalSceneOptions: { triggerHook: 'onLeave' }
+    });
+    var wideScene = new ScrollMagic.Scene({
+        triggerElement: '.main-menu'
+    });
+    var setOpacity = new ScrollMagic.Scene({
+        triggerElement: '.extra-header'
+    }).setClassToggle('.main-menu.border-bottom-4px','klrn_opacity_95');
+        
+    controller.addScene(wideScene);
+    controller.addScene(setOpacity);
+       
+    //pin navigation
+    var windowWidth = $(window).width();
+    
+    if(windowWidth > 960) {
+        wideScene.setPin('.main-menu');
+    }
+    
+    $(window).on('resize orientationchange', function() {
+        windowWidth = $(window).width();
+        if(windowWidth > 960) {
+            wideScene.setPin('.main-menu');
+        }
+        else if(windowWidth < 961) { 
+            wideScene.removePin('.main-menu');
+        }           
+    });	
+}());    
+
+//track click events on images with klrn_track added to alt tags   
+(function() {
+    var images = document.images, parent, options = {}, i, length = images.length;
+    options.eventAction = 'Clicks';
+    for (i=0; i<length; i++) {
+        //see if alt tag says image click should be tracked
+        if (images[i].alt.indexOf('klrn_track') !== -1) { 
+            parent = images[i].parentNode;
+            if (parent.nodeName === 'SPAN') parent = parent.parentNode; 
+			options.target = parent
+
+            //see if image has active a tag
+            if (parent.nodeName ==='A' && parent.href !== '') {                 
+                //handle whether link is outbound or internal 
+                if (parent.href.indexOf('/') !== 0 && parent.href.indexOf('klrn.org') === -1) {
+                  options.eventCategory = 'Outbound Links';
+                  options.outboundLink = parent.href;
+                }  
+                else options.eventCategory = 'Internal Links';
+            }
+            else continue;	
+            
+            options.eventLabel = images[i].alt.replace('klrn_track', '').replace(/^\s+|\s+$/g,'');
+            //set Google tracking
+            klrn.trackEvents([options]); 
+        }
+    }    
+}());
+    
+//track clicks on urls tagged for event tracking, must have eventLabel param 
+//example: ?eventLabel=Support-Us
+//example: ?eventAction=Right-Rail-Clicks&eventLabel=Support-Us   
+(function() {
+  var links = document.links, i, link;
+  var events = [], params, j, variables, keyValues, options;
+
+  //loop through page links
+  for (i=0; i<links.length; i++) {
+    link = links[i].href;
+    
+    //grab only links with default eventLabel for tracking
+    if (link.indexOf('?') > -1 && link.indexOf('eventLabel=') > -1) {
+      
+      //store keys and values
+      params = {};
+      variables = link.split('?')[1].split('&');    
+      for (j=0; j<variables.length; j++) {
+        keyValues = variables[j].split('=');
+        params[keyValues[0]] = keyValues[1];
+      }
+        
+      //now strip event parameters from link
+      link = link.replace(/[\?&]eventAction=[^&]*/, ''); 
+      link = link.replace(/[\?&]eventLabel=[^&]*/, '');
+      links[i].href = link;  
+      
+      //build options object  
+      options = {};
+      options.target = links[i];
+      if (params['eventLabel']) options.eventLabel = params['eventLabel'].replace(/-/g, ' ');  
+      else options.eventLabel = 'Event Label Not Set';
+      
+      if (link.indexOf('klrn.org') === -1 || link.indexOf('video.klrn.org') > -1) {
+        options.eventCategory = 'Outbound Links';
+        options.outboundLink = link;      
+      }
+      else options.eventCategory = 'Internal Links';
+      
+      if (params.hasOwnProperty('eventAction')) {
+        options.eventAction = params['eventAction'].replace(/-/g, ' ');
+      }
+      else options.eventAction = 'Clicks';  
+
+      //add options object to events array
+      events.push(options);   
+    }  
+  }
+
+  //set Google tracking
+  klrn.trackEvents(events);
+}());    
+    
+//add class to each anchor to remove hover underline style
+(function() {
+	anchors = document.anchors
+	for (i=0; i<anchors.length; i++) {
+		anchors[i].className += ' no_hover';
+	}
+}());    
+    
+    
+////    
+//run these scripts only for specific pages  
+////
+    
+//track clicks on homepage slider, and split out Passport slides
+//eventAction can be overwritten, i.e.: ?eventAction=Passport-Clicks
+(function() {
+  //only proceed if this is home page 
+  if (location.pathname !== '/home/') return;
+  
+  //get and prep slide titles and links
+  var slider = document.querySelectorAll('.carousel-inner div.item');
+  var i, slideLen = slider.length;
+  var title, isPassport, links;
+
+  var j, linksLen, link;
+  var events = [], params;
+  var k, variables, varLen, keyValues, options;
+
+  //exit if no carousel found
+  if (slideLen === 0) return;
+
+  //loop through slides
+  for (i=0; i<slideLen; i++) {
+    title = slider[i].querySelector('.carousel-caption a h2 b').innerHTML;
+    isPassport = false;
+    
+    //clean title, first splitting on either en and em dashes
+    //en dash  
+    if (title.indexOf(' - ') > -1) {    
+      title = title.split(' - ')[1];
+    }
+    //em dash  
+    if (title.indexOf(' – ') > -1) {    
+      title = title.split(' – ')[1];
+    } 
+    if (title.indexOf('on Passport') > -1) {    
+      isPassport = true;
+      //title = title.replace('on Passport', '');
+    } 
+    title = title.replace(/^\s+|\s+$/gm,'');
+
+    links = slider[i].querySelectorAll('a');
+    if (!links) continue; //skip if there are no links
+    linksLen = links.length;
+    
+    //loop through links in each slide and build events object  
+    for (j=0; j<linksLen; j++) {
+      link = links[j].href; 
+      params = {};    
+       
+      //if url has any parameters, store keys and values
+      if (link.indexOf('?') > -1 && link.indexOf('=') > -1) {      
+        variables = link.split('?')[1].split('&'); 
+        varLen = variables.length;  
+        
+        for (k=0; k<varLen; k++) {
+          keyValues = variables[k].split('=');
+          params[keyValues[0]] = keyValues[1];
+        }
+      }
+        
+      //now strip event parameters from link
+      link = link.replace(/[\?&]eventAction=[^&]*/, '');
+      link = link.replace(/[\?&]eventLabel=[^&]*/, ''); 
+      links[j].href = link;
+      
+      //build options object  
+      options = {};    
+      options.target = links[j];
+      options.eventCategory = 'Home Page Slider';
+      options.eventLabel = title;    
+      
+      if (link.indexOf('klrn.org') === -1 || link.indexOf('video.klrn.org') > -1) {
+        options.outboundLink = link;      
+      }
+      
+      if (isPassport) options.eventAction = 'Passport Clicks';
+      else if (params.hasOwnProperty('eventAction')) {
+        options.eventAction = params['eventAction'].replace(/-/g, ' ');
+      }
+      else options.eventAction = 'Clicks';  
+
+      //add options object to events array
+      events.push(options);
+    }
+  } 
+
+  //set Google tracking
+  klrn.trackEvents(events);  
+}()); 
+    
+//change newsletter image and link based on page
+//this must run after module that checks and then strips ?eventAction from url    
+(function() {
+  var educationPage = klrn.cache.bodyTag.className.indexOf('learning'),
+      corporatePage = klrn.cache.bodyTag.className.indexOf('corporate-support');  
+  if (educationPage === -1 && corporatePage === -1) return;
+	var signup = (klrn.cache.rightRail) 
+    ? klrn.cache.rightRail.querySelector('#klrn_button_newsletter_signup')
+    : document.querySelector('#klrn_button_newsletter_signup');
+  if (!signup || signup < 1) return;
+  var image = signup.getElementsByTagName('img')[0];
+  var link = signup.getElementsByTagName('a')[0];
+  var imgSrcRoot = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/buttons/';
+  if (educationPage !== -1) {
+    if (image) image.src = imgSrcRoot + 'signup-education.jpg';
+    if (link) link.href += 
+      (link.href.indexOf('?') === -1) 
+      ? '?newsletter=education' : '&newsletter=education';
+  }
+  if (corporatePage !== -1) {
+    if (image) image.src = imgSrcRoot + 'signup-corporate.jpg';
+    if (link) link.href = 'http://klrn.us14.list-manage.com/subscribe?u=204c65a829ba142405c31252c&id=d16481a0b1';
+  } 
+}());    
+    
+//for news page  
+if (klrn.cache.bodyTag.className.indexOf('explorer passport')!==-1
+    && klrn.cache.bodyTag.className.indexOf(' news')!==-1 
+ 	&& klrn.cache.bodyTag.className.indexOf(' newsfund')===-1) { 
+    
+    //add horizontal line below displayed rss feeds
+    (function() {
+		var feeds = document.querySelectorAll('.feed-item-entry'), i;
+		for (i=0; i<feeds.length-1; i++) {
+			var hr = document.createElement('hr');
+            var parent = feeds[i].parentNode.parentNode; 
+            if (feeds[i].parentNode === parent.childNodes[parent.childNodes.length-1]) continue;
+			feeds[i].appendChild(hr);
+		}
+    }());    
+}
+    
+//for support/corporate-support page
+if (klrn.cache.bodyTag.className.indexOf('support corporate-support')!==-1) {
+    
+	//temporarily hide iframes until window loads to remove flicker in IE    
+	(function () {        
+    //first inject CSS to make iframes invisible
+    var div = document.createElement('div'),
+      ref = document.getElementsByTagName('base')[0] ||
+      document.getElementsByTagName('script')[0];
+    
+    if (!ref) return;
+    div.innerHTML = '&shy;<style> iframe { visibility: hidden; } </style>';
+    ref.parentNode.insertBefore(div, ref);
+    
+    //second, when window loads, remove CSS to make iframes visible again
+    var runThis = function () {
+      div.parentNode.removeChild(div);
+    }
+    klrn.addLoadEvent(runThis);
+  }());
+    
+  //radomly load a video from playlist, using cookie to not repeat last one loaded     
+  (function() {
+    var newIndex, lastIndex = parseInt(klrn.getCookie('lastTestimonial'));
+    var getIndex = function () {
+      newIndex = Math.floor(Math.random() * 8);
+      return (newIndex !== lastIndex) ? newIndex : getIndex();
+    }
+    var index = getIndex();
+    var url = 'http://www.youtube.com/embed'
+    + '?listType=playlist&list=PLO5rIpyd-O4GzmurmhpBSWzI9ipOc9WOA&index='
+    + index
+    + '&hl=en_US&enablejsapi=1&autohide=1&showinfo=0&rel=0&wmode=opaque';
+    var sponsorVideo = document.getElementById('sponsor_videos');
+    
+    if (sponsorVideo) sponsorVideo.src = url;
+    klrn.setCookie('lastTestimonial', index, klrn.setTimeSpan(24, 'hours'), '/', 'klrn.org');
+    
+    window.onunload = function () {
+      if (sponsorVideo) sponsorVideo.src = '';        
+    };
+  }());
+    
+  //get sponsors CSV file and parse onto page
+	(function () {
+    var targetElem = document.getElementById('sponsors');
+    if (!targetElem) return;
+  
+    var settings = {
+      version: '6-26-2017-0', //set to override cache after data has been updated 
+      getFile: 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/data/sponsors.csv'      
+    };    
+      
+    var callback = function (data) {  
+      var data = klrn.parseCSV(data);
+      if (data.length < 1) return;
+      
+      var i, length = data.length, sponsorName;
+      var updated = (data[0].UPDATED.replace(/\s/g, '').length) 
+      ? '<p style="margin-top: -16px; font-size: 14px; font-style: italic;">Last updated ' + data[0].UPDATED + '</p>' 
+                  : '';
+      var  html = '<a id="corporate" name="corporate" class="no_hover"><h2>Corporate Sponsors</h2></a>'
+                + updated
+                + '<p>The following local community-minded companies support KLRN and underwrite outstanding programs, series, and special events. We invite you to support those who help KLRN enrich the lives of so many.</p>'
+                + '<h3>On-Air Programming Sponsors</h3>'
+                + '<ul>'; 
+                
+      //console.log(data);
+      for (i = 0; i < length; i++) {
+        if (data[i].LINK.replace(/\s/g, '').length) {
+          sponsorName = '<a href="' + data[i].LINK + '" target="_blank">'
+                      + data[i].SPONSOR + '</a>';
+        }
+        else sponsorName = data[i].SPONSOR;
+
+        html += '<li>' + sponsorName + ' ' + data[i].PROGRAMMING;
+      }
+
+      html += '</ul>';
+      targetElem.innerHTML = html;
+      targetElem.style.display = 'block';
+    }
+	klrn.ajaxLoad(settings.getFile + '?version=' + settings.version, callback);         
+  }());
+}  
+    
+//for support/klrn-endowment page
+if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
+	//fetch and parse memorials    
+	(function () {      
+    	//sets variables for CSV file URL parameters        
+		var memorialsSettings = {
+			// only reset this to override browser caches if reloading CSV data in same week
+			version: '2017-8',
+			date: this.date || new Date(),
+			// this gets tuesday of current week, so it can be added to CSV link to override browser caches 
+			update: function () {
+				var tuesday, curr = this.date;
+				tuesday = new Date(curr.setDate(curr.getDate() - curr.getDay() + 2));
+				tuesday = tuesday.toDateString().split(' ');
+				return tuesday[1] + '_' + tuesday[2] + '_' + tuesday[3];
+			}
+		};
+
+		// parse memorials data to set page content   
+		var setMemorials = function setMemorials(data) {            
+		var memorialsText = '',
+			honorsText = '',
+			currentDate = Date.parse(memorialsSettings.date),
+			expiresArray = [],
+			expiredDate = '',
+			memorialsArray = [],
+			honorsArray = [],
+			memorialsElem = document.getElementById('memorials_tributes');
+			
+		var filterName = function addNonBreakSpace(str) {  
+        	if (str.indexOf(' Jr') !== -1) {
+            	return str.replace(/\s+Jr/, '&nbsp;Jr');
+        	}
+        	if (str.indexOf(' (') !== -1) {
+            	return str.replace(/\s+\(/, '&nbsp;(');
+            }
+            else return str; 
+		};
+        	
+        var filterFrom = function filterName(str) {
+            return str.replace('KLRN Staff', 'KLRN&nbsp;Staff');
+        };                
+			
+		data = klrn.parseCSV(data); 
+        console.log(data);    
+            
+		if (!memorialsElem || data.length < 1) return;
+        memorialsElem.innerHTML = '<a id="memorials" name="memorials" class="no_hover">' 
+            + '<h2>Memorials &amp; Tributes</h2></a>';
+		for (var i = 0, length = data.length; i < length; i++) {
+			expiresArray = data[i].EXPIRES.split('-');
+			expiredDate = Date.parse(expiresArray[1] + ' ' + expiresArray[0] + ', ' + expiresArray[2]);
+			if (currentDate > expiredDate) continue;
+			if (data[i].TYPE.match(/memorial/i)) {
+				memorialsArray.push(data[i]);
+			}
+			if (data[i].TYPE.match(/honor/i)) {
+				honorsArray.push(data[i]);
+			}
+		}	
+		if (memorialsArray.length > 0) {            
+			memorialsText = '<h3 class="subhead">In Memory Of</h3>';
+			for (var i = 0, length = memorialsArray.length; i < length; i++) {
+				memorialsText += '<p><strong>'
+							  + filterName(memorialsArray[i].NAME)
+							  + '</strong><br>'
+							  + filterFrom(memorialsArray[i].FROM)	
+                   			  + '</p>';
+			}
+			memorialsElem.innerHTML += memorialsText;
+		}			
+        
+		if (honorsArray.length > 0) {
+			honorsText = '<h3 class="subhead">In Honor Of</h3>';
+			for (var i = 0, length = honorsArray.length; i < length; i++) {
+				honorsText += '<p><strong>'
+			     		   + filterName(honorsArray[i].NAME)
+						   + '</strong><br>'
+                    	   + filterFrom(honorsArray[i].FROM)
+                    	   + '</p>';
+			}
+			memorialsElem.innerHTML += honorsText;
+		}
+        if (memorialsArray.length > 0 || honorsArray.length > 0) {
+            memorialsElem.style.display = 'block'; 
+        }     
+	}
+
+		// load CSV file  
+		var csvFile = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/data/memorials.csv';
+		klrn.ajaxLoad(csvFile + '?update=' + memorialsSettings.update() + '&version=' + memorialsSettings.version, 			setMemorials);
+		
+		//console.log('CHECK URL STRING: memorials.csv?update=' + memorialsSettings.update() + '&version=' + 	memorialsSettings.version);
+        
+	}());
+}
+    
+//for Dinosaur George page  
+(function () {      
+  if (klrn.cache.bodyTag.className.indexOf('dinosaur-george') === -1) return;
+  var targetElem = document.getElementById('dinosaur-george');
+  if (!targetElem) return false;
+
+  var settings = {
+    version: '0', //set to override cache after data has been updated 
+    getFile: 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/data/dinosaur-george.csv'      
+  };
+
+  var callback = function(data) {
+    data = klrn.parseCSV(data);
+    if (data.length < 1) return;
+    //console.log(data);
+          
+    var i, length = data.length,
+        name, file, next,
+        output = '<p>';
+        path = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/downloads/dinosaur-george/';
+      
+    for (i=0;i<length;i++) {
+      name = data[i].NAME.length > 0;
+      file = data[i].FILE.length > 0;
+      next = data[i+1] ? data[i+1].NAME.length > 0 : false; 
+      nextTwo = data[i+2] ? data[i+2].NAME.length > 0 : false; 
+      prevTwo = data[i-2] ? data[i-2].NAME.length > 0 : false;  
+        
+      //parse heads and subheads  
+      if (name && !file) {
+        if (!next) output += '</p><h2>' + data[i].NAME + '</h2><p>';        
+        else output += '<b>' + data[i].NAME + '</b><br>'; 
+      }
+          
+      //parase links and blank lines    
+      if (name && file) output += '<a href="' + path + data[i].FILE + '.pdf" target="_blank">'
+                                + data[i].NAME + '</a><br>';   
+      if ((!name && !file) && !(!nextTwo || !prevTwo)) output += '<br>';
+    } 
+    output += '</p>';
+    targetElem.innerHTML = output;  
+    targetElem.style.display = 'block';    
+  }
+
+  // load CSV file  
+  klrn.ajaxLoad(settings.getFile + '?update=' + settings.version, callback);  
+  //console.log('CHECK URL STRING: settings.getFile + '?update=' + settings.version);      
+}());  
+    
+//On Passport page, switch mobile Support KLRN button link to Passport donation form
+//and check whether visit caomes from cpc camapign 
+(function(){
+  if (klrn.cache.bodyTag.className.indexOf('passport passport') === -1) return;
+    
+  //change repeated passport class to passport_page  
+  var classes = klrn.cache.bodyTag.className;
+  klrn.cache.bodyTag.className = classes.replace('passport passport','passport passport_page');  
+    
+  var passRegularLink = 'https://klrn.secureallegiance.com/klrn/WebModule/Donate.aspx?P=WEBPASS&PAGETYPE=PLG&CHECK=W%2fdAvpGzKANMeHHUySsEIOzWDeZ%2beA1M';
+  var passCampaignLink = 'https://klrn.secureallegiance.com/klrn/WebModule/Donate.aspx?P=WEBPASC&PAGETYPE=PLG&CHECK=W%2fdAvpGzKAPMF%2bNfCiuek%2bzWDeZ%2beA1M'
+  
+  //switch mobile donate to regular passport link  
+  var link = document.getElementById('klrn_mobile_donate');
+  if (link) link.href = passRegularLink;
+  
+  //if visit is from campaign, switch links
+  var links = document.links,
+      query = location.search,
+      check = klrn.getCookie('klrnCampaign'),
+      i, length=links.length;
+  
+  if (query.indexOf('utm_medium=cpc') !== -1 && query.indexOf('utm_campaign=Passport') !== -1) {  
+      var d = new Date();
+      d.setTime(d.getTime() + (182*24*60*60*1000));      
+      klrn.setCookie('klrnCampaign', query.match(/utm_campaign=(.*?)&/)[1], d.toUTCString(), '/', 'klrn.org');
+  }  
+  else if (!check) return;
+
+  for (i=0; i<links.length; i++) {
+      if (links[i].href === passRegularLink) links[i].href = passCampaignLink;
+  } 
+}());  
+    
+//switch out Appraisal Day ticket links for Facebook campaign
+(function() {
+    //make sure this is the right page and right campaign
+    if (location.pathname !== '/antiques/') return;
+    if (location.search !== '?utm_source=facebook&utm_medium=cpc&utm_campaign=Antiques-Appraisal-Day') return;
+    
+    //ok then, switch ticket urls
+    var links = document.links;
+    var oldLink = 'https://secure.klrn.org/alleg/WebModule/Donate.aspx?P=WEBGNR&PAGETYPE=PLG&PCODE=ARS1&CHECK=Rn6OGo7h0%2fJEIkmdxt0MhYy6amVEWCzATNT3jFLWo%2feI8RQ0KgHGLw%3d%3d';
+    var newLink = 'https://secure.klrn.org/alleg/WebModule/Donate.aspx?P=ANTIQUES&PAGETYPE=PLG&CHECK=WSjPUGBrjV8YxE%2bov9bqFG3L5BYddGq6PVAl6UEf65g%3d';
+    var i, length = links.length, counter = 0;
+    for (i=0; i<length; i++) {
+        if (counter > 2) break;
+        if (links[i].href === oldLink) {
+			links[i].href = newLink;
+			counter++;
+        }
+    }
+}());  
+    
+//play all youtube links in modal for Indie Lens Pop-Up page    
+(function() {
+  if (klrn.cache.bodyTag.className.indexOf('indielens') === -1) return;
+  var links = document.links, i; 
+  for (i=0; i<links.length; i++) {
+    if (links[i].href.indexOf('youtube.com/watch?') > -1) {
+      var videoID = links[i].href.split('?v=')[1].split('&')[0];
+      var srcLink = 'http://www.youtube.com/embed/' 
+                  + videoID 
+                  + '/?rel=0&amp;enablejsapi=1&amp;version=3&amp;autohide=1&amp;showinfo=0&amp;html5=1'; 
+      links[i].setAttribute('data-target', '#previewVideo');
+      links[i].setAttribute('data-toggle', 'modal');
+      links[i].setAttribute('data-klrn-type', 'text/html');
+      links[i].setAttribute('data-klrn-class', 'youtube-player');
+      links[i].setAttribute('onclick', 'klrn.previewVideo(this)');
+      links[i].setAttribute('data-klrn-src', srcLink);
+      links[i].href = '';
+    }  
+  }
+}());
+    
+</script> 
+{% endaddtoblock %}

@@ -1,0 +1,166 @@
+'''
+REQUIRED: 1_image_src
+REQUIRED: 1_tile_name
+1_link_href defaults to no link
+1_tile_label defaults to sponsor
+
+This Smart Snippet will rotate up to four image tiles, with links, per each page load in the right rail. Each image tile must be 300px by 250px. The snippet also implements event tracking in the Google Analytics account installed sitewide.
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+1_tile_name = TextField
+1_image_src = TextField
+1_link_href = TextField
+1_tile_label = TextField
+
+2_tile_name = TextField
+2_image_src = TextField
+2_link_href = TextField
+2_tile_label = TextField
+
+3_tile_name = TextField
+3_image_src = TextField
+3_link_href = TextField
+3_tile_label = TextField
+
+4_tile_name = TextField
+4_image_src = TextField
+4_link_href = TextField
+4_tile_label = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style></style>
+{% endaddtoblock %}
+
+
+{% if 1_tile_name and 1_image_src %}
+<div class="text-plugin clearfix box" style="display: none;">
+  <div id="right_rail_ad">
+  
+    <a id="right_rail_ad_link" href="">
+      <img id="sidebar_ad" src="{{ '/KLRN/images/sponsors/right-rail/KLRN-Sponsors-RightRail.png'|filerfile }}" title="" alt="">
+    </a> 
+    
+    <p id="right_rail_ad_label">SPONSOR</p>
+  </div>
+</div>
+{% endif %}
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+
+//set link and image properties, and track click events
+(function() { 
+
+  //first see if initial django inputs are valid
+  var container = document.getElementById('right_rail_ad'); 
+  if (!container) return;  
+
+  //these variables need to be shared with the event tracking module  
+  var link = document.getElementById('right_rail_ad_link'),
+      eventName, event;  
+  
+  //create array of objects holding django input variables 
+  var setData = function() {      
+    var ads = [], checkName, checkImage;    
+     
+    ads[0] = {'name': '{{1_tile_name}}', 'src': '{{1_image_src}}',
+              'href': '{{1_link_href}}', 'label': '{{1_tile_label}}'};
+    ads[1] = {'name': '{{2_tile_name}}', 'src': '{{2_image_src}}',
+              'href': '{{2_link_href}}', 'label': '{{2_tile_label}}'};
+    ads[2] = {'name': '{{3_tile_name}}', 'src': '{{3_image_src}}',
+              'href': '{{3_link_href}}', 'label': '{{3_tile_label}}'};
+    ads[3] = {'name': '{{4_tile_name}}', 'src': '{{4_image_src}}',
+              'href': '{{4_link_href}}', 'label': '{{4_tile_label}}'}; 
+      
+    //remove array items for any django names or images not set 
+    for (i=ads.length-1; i>-1; i--) {
+      checkName = ads[i].name.replace(/^\s+|\s+$/,'');
+      checkImage = ads[i].src.replace(/^\s+|\s+$/,'');   
+      if (!checkName || !checkImage) check = ads.splice(i, 1);     
+    }
+
+    //return array of valid ads, or false if there are none to show
+    return ads.length > 0 ? ads : false;  
+  }
+  
+  //randomly select ad to show while excluding the ad shown on last visit 
+  var setAd = function() { 
+
+    //first get ad data and see if there is anything to show 
+    var ads = setData();
+    if (!ads) return;
+           
+    var image = document.getElementById('sidebar_ad'); console.log
+    var label = document.getElementById('right_rail_ad_label');  
+    
+    if (ads.length > 1) {
+      var ignoreIndex = parseInt(klrn.getCookie('lastAd')), index; //get index to ignore
+      if (!ignoreIndex || (ignoreIndex > -1 && ignoreIndex < ads.length)) { //select ad if there is more than one
+        do index = Math.floor(Math.random() * ads.length); //keep setting random index   
+        while (index === ignoreIndex); //until it is different from ignoreIndex
+      }      
+    }
+    else index = 0; //set ad index to 0 if there is only one to show
+    image.src = ads[index].src;
+    image.alt = ads[index].name;
+    image.title = ads[index].name;
+    
+    if (ads[index].label.replace(/^\s+|\s+$/,'')) {
+      label.innerHTML = ads[index].label.toUpperCase();
+    }
+    
+    if (link) {
+      link.href = ads[index].href;
+      eventName = ads[index].name;
+    }
+
+    //remember ad selected so it can be excluded next time
+    klrn.setCookie('lastAd', index, klrn.setTimeSpan(24, 'hours'), '/', 'klrn.org');
+
+    //set container parent to display
+    container.parentNode.style.display = 'block';  
+  }
+  
+  //set tracking for click events
+  var setTracking = function() {
+	//get page
+	var page = location.pathname;
+
+	//set event tracking properties
+	event = [
+	  { 'target': link, 'eventAction': 'Clicks','eventLabel': eventName, 'page': page }
+	];
+      
+    //set tracking properties based on whether link is outbound or internal                
+    if (link.href.indexOf('klrn.org') === -1) {
+      event[0].eventCategory = 'Outbound Links';
+      event[0].outboundLink = link.href;
+    }  
+    else event[0].eventCategory = 'Internal Links';
+  }
+  
+  //check for klrn.trackEvents, invoke tracking when ready 
+  var checkOnLoad = function checkOnload() {
+    var checkKLRN = typeof klrn === 'undefined';
+    if (checkKLRN || (!checkKLRN && typeof klrn.trackEvents === 'undefined')) {
+	  setTimeout(checkOnload, 50);
+	}
+	else {	
+      setAd(); 
+      setTracking();  
+	  klrn.trackEvents(event);		
+	}	
+  }
+  checkOnLoad();	
+}());   
+    
+</script>
+{% endaddtoblock %}

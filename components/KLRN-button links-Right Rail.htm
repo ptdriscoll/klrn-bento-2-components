@@ -1,0 +1,67 @@
+'''
+REQUIRED: unique_id
+REQUIRED: at least one link_name and link_href
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+unique_id = TextField
+link_name_1 = TextField
+link_href_1 = TextField
+link_name_2 = TextField
+link_href_2 = TextField
+link_name_3 = TextField
+link_href_3 = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style></style>
+{% endaddtoblock %}
+
+
+{% if unique_id %}
+<div class="text-plugin clearfix box" style="display: none;">
+    <div id="klrn_links_{{unique_id}}">
+        
+		{% if link_name_1 and link_href_1 %}
+        <p style="margin-bottom: 0;">
+            <a class="klrn_btn default klrn_show_block" href="{{ link_href_1 }}">{{ link_name_1 }} &raquo;</a>
+        </p>    
+		{% endif %}
+        
+		{% if link_name_2 and link_href_2 %}
+        <p style="margin-bottom: 0;">
+            <a class="klrn_btn default klrn_show_block" href="{{ link_href_2 }}">{{ link_name_2 }} &raquo;</a>
+        </p>    
+		{% endif %}    
+        
+		{% if link_name_3 and link_href_3 %}
+        <p style="margin-bottom: 0;">
+            <a class="klrn_btn default klrn_show_block" href="{{ link_href_3 }}">{{ link_name_3 }} &raquo;</a>
+        </p>    
+		{% endif %}          
+
+  </div>
+</div>
+{% endif %}
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+
+    (function() {
+        var container = document.getElementById('klrn_links_{{unique_id}}');
+        if (!container) return;
+        
+        var atLeastOneLink = container.querySelector('.klrn_btn');        
+        if (!atLeastOneLink) return;
+        
+        container.parentNode.style.display = 'block';        
+    }());
+
+</script>
+{% endaddtoblock %}

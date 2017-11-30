@@ -1,0 +1,37 @@
+'''
+REQUIRED: twitter_page_url
+REQUIRED: twitter_widget_id
+'''
+
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+twitter_page_url = TextField
+twitter_widget_id = TextField
+twitter_chrome_options = TextField
+override_600px_height = TextField
+widget_css_id = TextField
+widget_css_classes = TextField
+-->
+{% endcomment %}
+
+<div id="{{widget_css_id}}" class="text-plugin clearfix box loading-twitter-feed {{widget_css_classes}}" style="display: none; padding: 0; line-height: 0;">
+    
+    <a class="twitter-timeline" href="{{twitter_page_url}}" data-widget-id="{{twitter_widget_id}}" data-chrome="" height="{{override_600px_height|default:'600'}}">Tweets by @klrn</a>    
+    
+    <script>
+        !function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + "://platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs); } }(document, "script", "twitter-wjs");
+    </script>
+    
+</div>
+
+{% addtoblock "js" %}
+<script type="text/javascript"> 
+    
+    setTimeout(function(){
+    	document.querySelector('.loading-twitter-feed').style.display = 'block';
+    }, 1500);    
+
+</script> 
+{% endaddtoblock %}

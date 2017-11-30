@@ -1,0 +1,91 @@
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+playlist_id_from_URL = TextField
+max_videos_to_show = Select|values=2,3,4,5,6,7,8,9,10,11,12
+columns_in_desktop = TextField
+play_in_modal = Select|values=Yes,No
+css_id = TextField
+css_classes = TextField
+-->
+{% endcomment %}
+
+{% addtoblock "css" %}{% endaddtoblock %}
+
+<div class="row-fluid klrn youtube playlist {{ css_classes }}" style="display: none;">
+  <div id="klrn_playlist_{{ css_id }}" class="span12 box promo-container clearfix one-promo horizontal with-image">
+      
+  </div><!--span-->
+</div><!--row-->
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+    
+function displayVideoPlaylist(data) {
+    //console.log(data);
+    
+    var target = document.getElementById('klrn_playlist_{{ css_id }}');
+    if (data.items.length > 0) target.parentNode.style.display = 'block';  
+    else return;    
+        
+    var useModal = ('{{ play_in_modal|default:'Yes' }}' === 'Yes') 
+    	? true : false;	
+	var i, length = data.items.length, item;
+	var thePlayer, videoID, videoURL, title, dataAttributes;
+    var span = ({{ columns_in_desktop|default:'3' }} === 2) ? 'span6' : 'span4' 
+    var marginClasses = '', outputInner = '';
+    var titleFilterEnglish = 'Healthy Kids Project | ',
+        titleFilterSpanish = 'El Proyecto Niños Sanos | ';
+    
+    
+	for (i = 0; i < length; i++) {
+		item = data.items[i].snippet;
+		videoID = item.resourceId.videoId;
+		videoURL = (useModal) ? '' : 'href="' + 'https://www.youtube.com/watch?v=' + videoID + '" ';
+		image = 'http://img.youtube.com/vi/' + videoID + '/mqdefault.jpg';
+		title = item.title;
+        title = title.replace(titleFilterEnglish, '');
+    	title = title.replace(titleFilterSpanish, '');
+		marginClasses = '', dataAttributes = '';
+        
+        if (span === 'span4') {
+        	if (i !== 0 && i % 3 === 0) marginClasses = '_769_margin_left_0';
+        	if (i > 2) marginClasses += ' _769_margin_top_14'
+        }
+        
+        if (span === 'span6') {
+        	if (i !== 0 && i % 2 === 0) marginClasses = '_769_margin_left_0';
+        	if (i > 1) marginClasses += ' _769_margin_top_14'
+        }
+        
+		if (useModal) {
+			dataAttributes = 'data-target="#previewVideo"'
+                           + 'data-toggle="modal"'
+                           + 'data-klrn-src="http://www.youtube.com/embed/' + videoID
+                           + '/?rel=0&enablejsapi=1&version=3&autohide=1&showinfo=0&html5=1"'
+                           + 'data-klrn-type="text/html"'
+                           + 'data-klrn-class="youtube-player" '
+		}
+
+        outputInner += '<div class="promo ' + span 
+                    + ' clearfix channel_none title_none details_none ' + marginClasses + '">'
+                    + '<a ' + videoURL + dataAttributes + ' onclick="klrn.previewVideo(this)" '
+                    + 'class="promo-link klrn_btn_video inline_onclick_only">'
+                    + '<img src="' + image + '" alt="' + title + '" title="' + title 
+                    + '" width="100%" height="auto">'
+                    + '</a>' 
+                    + '<a ' + videoURL + dataAttributes + '" onclick="klrn.previewVideo(this)"'
+                    + ' class="inline_onclick_only">'
+                    + '<p class="slim">' + title + '</p>'
+                    + '</a>'
+                    + '</div>' 
+	}
+	target.innerHTML = outputInner;
+}
+</script>  
+
+<script src="https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults={{ max_videos_to_show|default:'3' }}&playlistId={{ playlist_id_from_URL }}&key=AIzaSyDraaM_dJplqR3JbRtmx-HSIMfIZHTqXV4&callback=displayVideoPlaylist" type="text/javascript"></script>
+
+{% endaddtoblock %}

@@ -1,0 +1,39 @@
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+
+element_arg_for_querySelector = TextField
+YouTube_video_ID = TextField
+
+-->
+{% endcomment %}
+
+{% addtoblock "css" %}{% endaddtoblock %}
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+
+//grab element and add data attributes to its links so they play a video in a modal   
+(function(){  
+ 	if (!'{{ YouTube_video_ID }}') return; //make sure there's a video id
+    
+    var promo = document.querySelector('{{ element_arg_for_querySelector }}');
+    if (!promo) return; //if there is not targeted elment, forget about it
+    
+    var links = promo.querySelectorAll('a'), i;
+    if (links.length < 1) return; //if there are no links to target, then job over
+    
+    for (i=0; i<links.length; i++) {
+        links[i].href='';
+        links[i].setAttribute('data-target', '#previewVideo');
+        links[i].setAttribute('data-toggle', 'modal');
+        links[i].setAttribute('data-klrn-src', 'http://www.youtube.com/embed/{{ YouTube_video_ID }}');
+        links[i].setAttribute('data-klrn-type', 'text/html');
+        links[i].setAttribute('data-klrn-class', 'youtube-player');
+        links[i].setAttribute('onclick', 'klrn.previewVideo(this)');
+    }     
+}());
+
+</script>
+{% endaddtoblock %}

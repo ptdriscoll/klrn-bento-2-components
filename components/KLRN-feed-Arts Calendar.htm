@@ -1,0 +1,124 @@
+'''
+REQUIRED: required_calendar_view
+optional_submission_form defaults to 'No'
+'''
+
+{% load sekizai_tags filertags %}
+{% comment %}
+<!-- SmartSnippets Variables
+required_calendar_view = Select|values=Desktop Only,Mobile Only,Desktop and Mobile
+optional_submission_form = Select|values=Yes,No
+-->
+{% endcomment %}
+
+{% addtoblock "css" %} 
+<style>
+	#klrn_arts_calendar_mobile.klrn_arts_calendar { display: none }
+	@media (max-width: 769px) {  
+		#klrn_arts_calendar_desktop.klrn_arts_calendar { display: none }
+		#klrn_arts_calendar_mobile.klrn_arts_calendar { display: block }
+	}
+</style>
+{% endaddtoblock %}
+
+<div class="row-fluid">
+    <div class="text-plugin clearfix box" style="background-color: #fdfdfd;">
+        <script type="text/javascript" src="http://www.trumba.com/scripts/spuds.js"></script>
+        <h1 style="color: #DC4D4D">Arts Calendar</h1>
+        <p style="margin-bottom: 25px;" >The KLRN Arts Calendar no longer accepts submissions, and will retire in January 2018.</p>
+        
+		{% if 'Yes' in optional_submission_form %}
+			<p>
+                <a class="klrn_btn primary klrn_arts_calendar_submit_button" href="#">Submit Event »</a>
+        		<a class="klrn_btn primary klrn_arts_calendar_back_button" style="display: none" href="#">« Back to Calendar</a>
+        	</p>			
+		{% endif %}
+        <div id="klrn_arts_calendar_view">
+		{% if 'Desktop and Mobile' in required_calendar_view %}
+			<div id="klrn_arts_calendar_desktop" class="klrn_arts_calendar klrn_arts_calendar_desktop">				
+        		<script type="text/javascript">
+                    $Trumba.addSpud({
+                        webName: "klrn-arts-calendar",
+                        spudType : "main" 
+                    });
+                    </script>
+                    <noscript>
+                        Your browser must support JavaScript to view this content. 
+                        Please enable JavaScript in your browser settings then try again. 
+                        <a href='http://www.trumba.com'>Events calendar powered by Trumba</a>
+				</noscript>
+        	</div>	
+        	<div id="klrn_arts_calendar_mobile"  class="klrn_arts_calendar klrn_arts_calendar_mobile">
+        		<script type="text/javascript">
+                    $Trumba.addSpud({
+                        webName: "klrn-arts-calendar",
+                        spudType : "main" ,
+                        spudConfig : "mobile" 
+                 	});
+				</script>
+        	</div>	
+		{% endif %}
+        </div><!--klrn arts calendar view-->   
+		{% if 'Desktop Only' in required_calendar_view %}
+			<div id="klrn_arts_calendar_desktop_only" class="klrn_arts_calendar">	
+        		<script type="text/javascript">
+                    $Trumba.addSpud({
+                        webName: "klrn-arts-calendar",
+                        spudType : "main" 
+                    });
+                    </script>
+                    <noscript>
+                        Your browser must support JavaScript to view this content. 
+                        Please enable JavaScript in your browser settings then try again. 
+                        <a href='http://www.trumba.com'>Events calendar powered by Trumba</a>
+				</noscript>
+        	</div>	
+		{% endif %}        
+		{% if 'Mobile Only' in required_calendar_view %}
+			<div id="klrn_arts_calendar_mobile_only" class="klrn_calendar">
+        		<script type="text/javascript">
+                    $Trumba.addSpud({
+                        webName: "klrn-arts-calendar",
+                        spudType : "main" ,
+                        spudConfig : "mobile" 
+                 	});
+				</script>        
+        	</div>			
+		{% endif %}
+		{% if 'Yes' in optional_submission_form %}	
+        	<div id="klrn_arts_calendar_submission" style="display: none">
+        		<script id="trumbaSubmitEventJS" type="text/javascript" src="http://www.trumba.com/ea/scripts/submitevent.js"></script>
+                <script type="text/javascript">trumbaInsertSubmitEventForm({
+                    code: "43nebxhjk4zya4k7ncepsp5nu9",
+                    width: 385,
+                    height: 775,
+                    backgroundColor: "white" 
+                });
+				</script>
+        	</div>	 
+			<p>
+                <a class="klrn_btn primary klrn_arts_calendar_submit_button" href="#">Submit Event »</a>
+        		<a class="klrn_btn primary klrn_arts_calendar_back_button" href="#" style="display: none">« Back to Calendar</a>
+        	</p>        
+		{% endif %}
+    </div>
+</div>
+{% addtoblock "js" %}
+<script type="text/javascript"> 
+(function ($, undefined) {                
+    document.getElementById('trumbaSubmitEventForm').style.width='100%';                    
+    $('.klrn_arts_calendar_submit_button').on('click', function(){
+        $('#klrn_arts_calendar_view').hide();
+        $('#klrn_arts_calendar_submission').fadeIn();
+        $('.klrn_arts_calendar_submit_button').hide();
+        $('.klrn_arts_calendar_back_button').fadeIn();
+    });
+    $('.klrn_arts_calendar_back_button').on('click', function(){
+        $('#klrn_arts_calendar_submission').hide();
+        $('#klrn_arts_calendar_view').fadeIn();
+        $('.klrn_arts_calendar_back_button').hide();
+        $('.klrn_arts_calendar_submit_button').fadeIn();
+    });
+})(jQuery);
+</script> 
+{% endaddtoblock %}

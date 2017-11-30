@@ -1,0 +1,23 @@
+{% comment %}
+<!-- SmartSnippets Variables                                                                           
+940__logo_image=ImageField
+940_height=TextField
+940_width=TextField
+600__logo_image=ImageField                                                                               
+600_height=TextField
+600_width=TextField
+mobile__logo_image=ImageField                                                                           
+mobile_height=TextField
+mobile_width=TextField
+logo_site_link=TextField                                                                               
+logo_alt_text=TextField                                                                                
+-->
+{% endcomment %}
+<a href="{{ logo_site_link }}" class="pull-left" title="{{ logo_alt_text }}"
+    data-r940="<img src='{{ 940__logo_image }}' alt='{{ logo_alt_text }}' width='{{ 940_width }}' height='{{940_height}}'>"
+    data-r600="<img src='{{ 600__logo_image }}' alt='{{ logo_alt_text }}' width='{{ 600_width }}' height='{{ 600_height }}'>"
+    data-r0='<img src="{{ mobile__logo_image }}" alt="{{ logo_alt_text }}" width="{{mobile_width}}" height="{{mobile_height}}">'
+   data-i-response=""
+   id="station-logo">
+   <img src='{{ logo940_image }}' alt='{{ logo_alt_text }}' width='414' height='182'>
+</a>
