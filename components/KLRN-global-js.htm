@@ -1016,9 +1016,12 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     }
 }());  
     
-//play all youtube links in modal for Indie Lens Pop-Up page    
+//play all youtube links in modal for Indie Lens Pop-Up page and Lorraine Hansberry page    
 (function() {
-  if (klrn.cache.bodyTag.className.indexOf('indielens') === -1) return;
+    if (klrn.cache.bodyTag.className.indexOf('indielens') === -1 
+       && klrn.cache.bodyTag.className.indexOf('lorraine') === -1) {
+        return;
+    }
   var links = document.links, i; 
   for (i=0; i<links.length; i++) {
     if (links[i].href.indexOf('youtube.com/watch?') > -1) {
