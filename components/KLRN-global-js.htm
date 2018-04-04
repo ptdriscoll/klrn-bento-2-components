@@ -444,7 +444,42 @@ exports.swapPromoWrappers = (function() {
 			anchors[i].getElementsByTagName('img')[0].style.width = '32px';
 		}
 	}	
-}());  
+}()); 
+    
+//swap KLRN News Updates home page promo with On The Record on Fridays, Saturdays and Sundays
+(function() {
+	var day = new Date().getDay();
+	if (document.body.className.indexOf('home') === -1 || day < 4) return; //skip if not home page or a weekend day
+	
+	var newLink = 'http://www.klrn.org/on-the-record/';
+	var newImg = 'http://image.pbs.org/merlin/s3.amazonaws.com/pbs.merlin.cdn.prod/program_pages/JN6hvYa-show-mezzanine16x9-3Tgwhv8.380x212.jpg.fit.640x360.jpg';
+	var newImg = 'http://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/images/programming/on-record/jim-forsyth.jpg';
+	var newTitle = 'On The Record';
+	var newDesc = 'Hear from key players in San Antonio. Hosted by Jim Forsyth of WOAI.';
+	var el, links = document.links, i;
+
+	//grab News Updates promo element
+	for (i=0; i<links.length; i++) {
+		if (links[i].innerHTML.indexOf('News Updates') === -1) continue; 
+		el = links[i].parentNode;
+		break;
+	}
+	
+	//replace links, image, title and description in the promo element
+	if (el && el.className.indexOf('promo') !== -1) {
+		elLinks = el.querySelectorAll('a');
+		elImg = el.querySelector('img');
+		elTitle = el.querySelector('h3 a');
+		elDesc = el.querySelector('p');
+
+		if (elLinks) for (i=0; i<elLinks.length; i++) {	
+			elLinks[i].href = newLink;
+		}	
+		if (elImg) elImg.src = newImg;
+		if (elTitle) elTitle.innerHTML = newTitle;
+		if (elDesc) elDesc.innerHTML = newDesc;		
+	}
+}());
     
 //fade in body so loading doesn't look so jerky 
 (function() { 
