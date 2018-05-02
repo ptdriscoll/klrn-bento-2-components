@@ -8,6 +8,7 @@ columns_in_desktop = TextField
 play_in_modal = Select|values=Yes,No
 css_id = TextField
 css_classes = TextField
+remove_from_title_regex = TextField
 -->
 {% endcomment %}
 
@@ -30,15 +31,13 @@ function displayVideoPlaylist(data) {
     if (data.items.length > 0) target.parentNode.style.display = 'block';  
     else return;    
         
-    var useModal = ('{{ play_in_modal|default:'Yes' }}' === 'Yes') 
+    var useModal = ('{{ play_in_modal|default:"Yes" }}' === 'Yes') 
     	? true : false;	
 	var i, length = data.items.length, item;
 	var thePlayer, videoID, videoURL, title, dataAttributes;
     var span = ({{ columns_in_desktop|default:'3' }} === 2) ? 'span6' : 'span4' 
     var marginClasses = '', outputInner = '';
-    var titleFilterEnglish = 'Healthy Kids Project | ',
-        titleFilterSpanish = 'El Proyecto Niños Sanos | ';
-    
+    var removeFromTitle = '{{ remove_from_title_regex }}', removeFromTitleRE;
     
 	for (i = 0; i < length; i++) {
 		item = data.items[i].snippet;
@@ -46,8 +45,10 @@ function displayVideoPlaylist(data) {
 		videoURL = (useModal) ? '' : 'href="' + 'https://www.youtube.com/watch?v=' + videoID + '" ';
 		image = 'http://img.youtube.com/vi/' + videoID + '/mqdefault.jpg';
 		title = item.title;
-        title = title.replace(titleFilterEnglish, '');
-    	title = title.replace(titleFilterSpanish, '');
+        if (removeFromTitle) {
+            removeFromTitleRE = new RegExp(removeFromTitle, 'gi'); 
+            title = title.replace(removeFromTitleRE, '');
+        }
 		marginClasses = '', dataAttributes = '';
         
         if (span === 'span4') {
