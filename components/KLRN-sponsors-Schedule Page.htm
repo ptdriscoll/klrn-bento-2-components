@@ -1,13 +1,3 @@
-'''
-REQUIRED: 1_image_src
-REQUIRED: 1_tile_name
-1_link_href defaults to no link
-1_tile_label defaults to sponsor
-
-This Smart Snippet will run one to four image tiles with links. Each image tile must be 180px by 180px. The first tile position must be occupied for anything to run. The snippet also implements event tracking in the Google Analytics account installed sitewide.
-'''
-
-
 {% load sekizai_tags filertags %}
 
 {% comment %}
@@ -194,19 +184,19 @@ This Smart Snippet will run one to four image tiles with links. Each image tile 
 	//set event tracking properties
 	var events = [
 		{ 'target': document.getElementById('klrn_schedule_page_sponsor_1'),      	  
-		  'eventCategory': outLink1 ? 'Outbound Links' : 'Inbound Links',       
+		  'eventCategory': outLink1 ? 'Outbound Links' : 'Internal Links',       
       	  'outboundLink': outLink1, 'eventAction': 'Clicks', 
 		  'eventLabel': '{{1_tile_name}}', 'page': page },
 		{ 'target': document.getElementById('klrn_schedule_page_sponsor_2'), 
-		  'eventCategory': outLink2 ? 'Outbound Links' : 'Inbound Links', 
+		  'eventCategory': outLink2 ? 'Outbound Links' : 'Internal Links', 
       	  'outboundLink': outLink2, 'eventAction': 'Clicks', 
 		  'eventLabel': '{{2_tile_name}}', 'page': page },
 		{ 'target': document.getElementById('klrn_schedule_page_sponsor_3'), 
-		  'eventCategory': outLink3 ? 'Outbound Links' : 'Inbound Links', 
+		  'eventCategory': outLink3 ? 'Outbound Links' : 'Internal Links', 
       	  'outboundLink': outLink3, 'eventAction': 'Clicks', 
 		  'eventLabel': '{{3_tile_name}}', 'page': page },
 		{ 'target': document.getElementById('klrn_schedule_page_sponsor_4'), 
-		  'eventCategory': outLink4 ? 'Outbound Links' : 'Inbound Links', 
+		  'eventCategory': outLink4 ? 'Outbound Links' : 'Internal Links', 
           'outboundLink': outLink4, 'eventAction': 'Clicks', 
 		  'eventLabel': '{{4_tile_name}}', 'page': page }
 	];	

@@ -1,0 +1,324 @@
+{% load sekizai_tags filertags %}
+
+{% comment %}
+<!-- SmartSnippets Variables
+1_tile_name = TextField
+1_image_src = TextField
+1_link_href = TextField
+1_tile_label = TextField
+
+2_tile_name = TextField
+2_image_src = TextField
+2_link_href = TextField
+2_tile_label = TextField
+
+3_tile_name = TextField
+3_image_src = TextField
+3_link_href = TextField
+3_tile_label = TextField
+
+4_tile_name = TextField
+4_image_src = TextField
+4_link_href = TextField
+4_tile_label = TextField
+
+5_tile_name = TextField
+5_image_src = TextField
+5_link_href = TextField
+5_tile_label = TextField
+
+6_tile_name = TextField
+6_image_src = TextField
+6_link_href = TextField
+6_tile_label = TextField
+-->
+{% endcomment %}
+
+
+{% addtoblock "css" %}
+<style>
+    #klrn_schedule_page_sponsors { padding-bottom: 0; display: none; }
+	#klrn_schedule_page_sponsors .row-fluid { text-align: left; }
+    #klrn_schedule_page_sponsors p { display: inline-block; margin-bottom: 6px; }
+    #klrn_schedule_page_sponsors img { margin: 0; border: 1px solid #ddd; } 
+    #klrn_schedule_page_sponsors p span { 
+        font-size: 10px; text-align: right; display: block; text-transform: uppercase; 
+    }
+    #klrn_schedule_page_sponsors .row-fluid .span3 { max-width: 180px; }
+    @media (max-width: 960px) {
+        #klrn_schedule_page_sponsors .row-fluid .span3 { 
+        	float: left !important; 
+        	width: 23% !important;         	
+        	margin-left: 2.6% !important; 
+        }  
+        #klrn_schedule_page_sponsors .row-fluid .span3:first-child { 
+            margin-left: 0 !important; 
+        }
+	}
+    @media (max-width: 480px) {
+        #klrn_schedule_page_sponsors .row-fluid .span3 { 
+        	width: 47.6% !important; 
+        	margin-left: 4.5% !important;
+        } 
+        #klrn_schedule_page_sponsors .row-fluid .span3:first-child { 
+            margin-left: 0 !important; 
+        }
+		#klrn_schedule_page_sponsors .row-fluid .span3.third_child { 
+            margin-left: 0 !important; 
+        }
+	}
+    @media (max-width: 320px) {
+        #klrn_schedule_page_sponsors { 
+        	padding-right: 4% !important; 
+        	padding-left: 4% !important; 
+        }   
+        #klrn_schedule_page_sponsors .row-fluid .span3 { 
+        	width: 44.5% !important; 
+        	margin-left: 5% !important;
+        }
+	}   
+</style>
+{% endaddtoblock %}
+
+{% if 1_tile_name %}
+<div id="klrn_schedule_page_sponsors" class="text-plugin clearfix box">
+<div class="row-fluid">    
+    
+	<div class="span3">
+        <p class="klrn_schedule_page_sponsor">
+            <a href="">
+                <img class="" src="" alt="">
+            </a>
+            <span>SPONSOR</span>
+        </p>
+	</div><!--span-->    
+    
+    {% if 2_tile_name %}    
+	<div class="span3">
+        <p class="klrn_schedule_page_sponsor">
+            <a href="">
+                <img class="" src="" alt="">
+            </a>
+            <span>SPONSOR</span>
+        </p>
+	</div><!--span-->
+    {% endif %}    
+    
+    {% if 3_tile_name %}    
+	<div class="span3 third_child">
+        <p class="klrn_schedule_page_sponsor">
+            <a href="">
+                <img class="" src="" alt="">
+            </a>
+            <span>SPONSOR</span>
+        </p>
+	</div><!--span-->
+    {% endif %}    
+    
+    {% if 4_tile_name %}    
+	<div class="span3">
+        <p class="klrn_schedule_page_sponsor">
+            <a href="">
+                <img class="" src="" alt="">
+            </a>
+            <span>SPONSOR</span>
+        </p>
+	</div><!--span-->
+    {% endif %}
+   
+</div><!--row-->
+</div><!--text-plugin-->
+{% endif %}
+
+
+{% addtoblock "js" %}
+<script type="text/javascript">
+
+//ready and resize     
+(function ($, undefined) {
+    var child = document.getElementById('klrn_schedule_page_sponsors');
+    if (!child) return;
+	var parent = document.querySelector('.page-content'),
+		schedule = document.getElementById('schedules-container').parentNode,
+		isMobile;
+	var getScreenSize = function() { return Modernizr.mq('(max-width: 599px)') ? true : false; }
+	var	saveScreenSize = function() { return isMobile = getScreenSize(); }
+	$(document).ready(function () {
+		if (isMobile) {
+			parent.appendChild(child); 
+		}			
+	}); 
+	$(window).resize(function () {
+        if (!child) return;
+		if (isMobile !== getScreenSize()) {
+			saveScreenSize();
+			if (isMobile) parent.appendChild(child);
+			else parent.insertBefore(child, schedule);
+			console.log(isMobile);			
+		}
+	});    
+})(jQuery); 
+    
+//select and set ads to rotate in, and track events
+(function() {
+
+    //create array of objects holding django input variables
+    var setData = function() {
+        var ads = [], checkName, checkImage, i;
+        
+        ads[0] = {'name': '{{1_tile_name}}', 'src': '{{1_image_src}}',
+                  'href': '{{1_link_href}}', 'label': '{{1_tile_label}}'};
+        ads[1] = {'name': '{{2_tile_name}}', 'src': '{{2_image_src}}',
+                  'href': '{{2_link_href}}', 'label': '{{2_tile_label}}'};
+        ads[2] = {'name': '{{3_tile_name}}', 'src': '{{3_image_src}}',
+                  'href': '{{3_link_href}}', 'label': '{{3_tile_label}}'};
+        ads[3] = {'name': '{{4_tile_name}}', 'src': '{{4_image_src}}',
+                  'href': '{{4_link_href}}', 'label': '{{4_tile_label}}'};        
+        ads[4] = {'name': '{{5_tile_name}}', 'src': '{{5_image_src}}',
+                  'href': '{{5_link_href}}', 'label': '{{5_tile_label}}'}; 
+        ads[5] = {'name': '{{6_tile_name}}', 'src': '{{6_image_src}}',
+                  'href': '{{6_link_href}}', 'label': '{{6_tile_label}}'};                  
+
+        //remove array items for any django names or images not set 
+        for (i=ads.length-1; i>-1; i--) {
+          checkName = ads[i].name.replace(/^\s+|\s+$/,'');
+          checkImage = ads[i].src.replace(/^\s+|\s+$/,'');   
+          if (!checkName || !checkImage) check = ads.splice(i,1);     
+        }
+        
+        //return array of valid ads, or false if there are none to show
+        return ads.length > 0 ? ads : false; 
+        
+    }//setData
+    
+    //randomly exclude ads to show, starting with ads last shown 
+    var getAds = function(ads) {     
+        if (!ads) return false;
+    
+        //create copy of ad indices, and set how many ads to remove
+        var adIndices = ads.map(function(x,i){return i;}); 
+        var numAdsToRemove = adIndices.length-4;        
+
+        //randomly exclude ads to show, starting with ads last shown
+        if (numAdsToRemove > 0) {    
+            var prevAdIndices, i, indexToRemove;
+            
+            //get last shown ad indices and put into array 
+            prevAdIndices = klrn.getCookie('lastAdsOnSchedulePage')  
+            if (prevAdIndices && prevAdIndices.length > 0) {
+                prevAdIndices = prevAdIndices.split('-').map(Number);            
+            }
+            else prevAdIndices = [];
+            
+            //start randomly removing ads that previously ran, if there are any              
+            for (i=0; i<numAdsToRemove; i++) { 
+                if (prevAdIndices.length == 0) break;
+                indexToRemove = Math.floor(Math.random() * prevAdIndices.length);
+                
+                //console.log(adIndices[adIndices.indexOf(prevAdIndices[indexToRemove])]); 
+                //console.log(prevAdIndices[indexToRemove]);
+                //console.log('');                
+               
+                //remove from indices of available ads
+                adIndices.splice(adIndices.indexOf(prevAdIndices[indexToRemove]), 1);
+                
+                //now remove from indices of previously shown ads
+                prevAdIndices.splice(indexToRemove, 1);
+            }
+            
+            //console.log(adIndices);
+            //console.log(prevAdIndices);
+          
+            //randomly remove more available ads if there are still more than 4
+            while (adIndices.length > 4) { //runs only there are more than 4 adIndices
+                indexToRemove = Math.floor(Math.random() * adIndices.length);
+                adIndices.splice(indexToRemove, 1);          
+            }  
+            
+            //console.log(adIndices);            
+        }
+        
+        return adIndices;
+        
+    }//getAds 
+    
+    //set html and event tracking
+    var setAds = function(ads, adIndices) { 
+        if (!adIndices) return false;
+        
+        //get dom elments to parse through
+        var images = document.querySelectorAll('.klrn_schedule_page_sponsor a img');     
+        var links = document.querySelectorAll('.klrn_schedule_page_sponsor a');
+        var labels = document.querySelectorAll('.klrn_schedule_page_sponsor span');
+        
+        //set variable and helper function for event tracking
+        var page = location.pathname;
+        var checkOutLink = function(link) {
+            if (link.indexOf('/') !== 0 && link.indexOf('klrn.org') === -1) return link;
+            else return false;
+        }
+        
+        var events = [], i, eventView;
+        
+        for (i=0; i<adIndices.length; i++) {
+        
+            //set html
+            images[i].src = ads[adIndices[i]].src;
+            images[i].alt = ads[adIndices[i]].name;
+            links[i].href = ads[adIndices[i]].href;
+            labels[i].innerHTML = ads[adIndices[i]].label;
+            
+            //set events for click tracking
+            outLink = checkOutLink(ads[adIndices[i]].href); 
+            events[i] = { 
+                'target': links[i],      	  
+                'eventCategory': outLink ? 'Outbound Links' : 'Internal Links',        
+                'outboundLink': outLink, 
+                'eventAction': 'Clicks', 
+                'eventLabel': ads[adIndices[i]].name, 
+                'page': page          
+            }
+            
+            //send view event to Google Analytics when page loads
+            eventView = {
+                hitType: 'event',
+                eventCategory: events[i].eventCategory,
+                eventAction: 'Views',
+                eventLabel: events[i].eventLabel,
+                page: events[i].page
+            }            
+            ga('send', eventView);            
+            //console.log(eventView)  
+        }
+        
+        //console.log(events);
+        return events;    
+    
+    }//setAds
+    
+    var run = function() {
+        var ads = setData();
+        var adIndices = getAds(ads);
+        var events = setAds(ads, adIndices);
+        
+        if (events) {
+            klrn.trackEvents(events);
+            document.getElementById('klrn_schedule_page_sponsors').style.display = 'block';
+        }    
+    }
+    
+	//check for klrn.trackEvents (klrn.getCookie will also be available by then), and run when ready 
+	var checkOnLoad = function checkOnload() {
+        var checkKLRN = typeof klrn === 'undefined';
+        if (checkKLRN || (!checkKLRN && typeof klrn.trackEvents === 'undefined')) {
+			setTimeout(checkOnload, 50);
+		}
+		else {		
+			run();   
+		}	
+	}
+	checkOnLoad();	
+}());    
+    
+</script>
+{% endaddtoblock %}
