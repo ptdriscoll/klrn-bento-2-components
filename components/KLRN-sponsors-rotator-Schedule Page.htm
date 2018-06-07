@@ -6,27 +6,22 @@
 1_image_src = TextField
 1_link_href = TextField
 1_tile_label = TextField
-
 2_tile_name = TextField
 2_image_src = TextField
 2_link_href = TextField
 2_tile_label = TextField
-
 3_tile_name = TextField
 3_image_src = TextField
 3_link_href = TextField
 3_tile_label = TextField
-
 4_tile_name = TextField
 4_image_src = TextField
 4_link_href = TextField
 4_tile_label = TextField
-
 5_tile_name = TextField
 5_image_src = TextField
 5_link_href = TextField
 5_tile_label = TextField
-
 6_tile_name = TextField
 6_image_src = TextField
 6_link_href = TextField
@@ -133,7 +128,6 @@
 
 {% addtoblock "js" %}
 <script type="text/javascript">
-
 //ready and resize     
 (function ($, undefined) {
     var child = document.getElementById('klrn_schedule_page_sponsors');
@@ -161,7 +155,6 @@
     
 //select and set ads to rotate in, and track events
 (function() {
-
     //create array of objects holding django input variables
     var setData = function() {
         var ads = [], checkName, checkImage, i;
@@ -178,7 +171,6 @@
                   'href': '{{5_link_href}}', 'label': '{{5_tile_label}}'}; 
         ads[5] = {'name': '{{6_tile_name}}', 'src': '{{6_image_src}}',
                   'href': '{{6_link_href}}', 'label': '{{6_tile_label}}'};                  
-
         //remove array items for any django names or images not set 
         for (i=ads.length-1; i>-1; i--) {
           checkName = ads[i].name.replace(/^\s+|\s+$/,'');
@@ -198,13 +190,12 @@
         //create copy of ad indices, and set how many ads to remove
         var adIndices = ads.map(function(x,i){return i;}); 
         var numAdsToRemove = adIndices.length-4;        
-
         //randomly exclude ads to show, starting with ads last shown
         if (numAdsToRemove > 0) {    
             var prevAdIndices, i, indexToRemove;
             
             //get last shown ad indices and put into array 
-            prevAdIndices = klrn.getCookie('lastAdsOnSchedulePage')  
+            prevAdIndices = klrn.getCookie('klrnLastAdsSchedulePage')  
             if (prevAdIndices && prevAdIndices.length > 0) {
                 prevAdIndices = prevAdIndices.split('-').map(Number);            
             }
@@ -290,6 +281,10 @@
             ga('send', eventView);            
             //console.log(eventView)  
         }
+        
+        //remember ad indices so they can be a top priority for excluding next time
+        adIndices = adIndices.join('-');
+        klrn.setCookie('klrnLastAdsSchedulePage', adIndices, klrn.setTimeSpan(24, 'hours'), '/', 'klrn.org');
         
         //console.log(events);
         return events;    
