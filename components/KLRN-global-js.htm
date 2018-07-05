@@ -249,7 +249,7 @@ exports.swapPromoWrappers = (function() {
         
         //load KLRN logo for print styles 
         var logoPrint = document.createElement('img');
-        logoPrint.src = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/KLRN_logo_2015_print.png';
+        logoPrint.src = 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/master/KLRN_logo_2015_print.png';
         logoPrint.id = 'logo_print';
         document.getElementById('station-logo').appendChild(logoPrint);
     
@@ -451,9 +451,8 @@ exports.swapPromoWrappers = (function() {
 	var day = new Date().getDay();
 	if (document.body.className.indexOf('home') === -1 || day < 4) return; //skip if not home page or a weekend day
 	
-	var newLink = 'http://www.klrn.org/on-the-record/';
-	var newImg = 'http://image.pbs.org/merlin/s3.amazonaws.com/pbs.merlin.cdn.prod/program_pages/JN6hvYa-show-mezzanine16x9-3Tgwhv8.380x212.jpg.fit.640x360.jpg';
-	var newImg = 'http://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/images/programming/on-record/jim-forsyth.jpg';
+	var newLink = 'http://www.klrn.org/ontherecord/';
+	var newImg = 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/images/programming/on-record/on-the-record.jpg';
 	var newTitle = 'On The Record';
 	var newDesc = 'Hear from key players in San Antonio. Hosted by Jim Forsyth of WOAI.';
 	var el, links = document.links, i;
@@ -735,7 +734,7 @@ exports.swapPromoWrappers = (function() {
   if (!signup || signup < 1) return;
   var image = signup.getElementsByTagName('img')[0];
   var link = signup.getElementsByTagName('a')[0];
-  var imgSrcRoot = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/buttons/';
+  var imgSrcRoot = 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/master/buttons/';
   if (educationPage !== -1) {
     if (image) image.src = imgSrcRoot + 'signup-education.jpg';
     if (link) link.href += 
@@ -814,8 +813,8 @@ if (klrn.cache.bodyTag.className.indexOf('support corporate-support')!==-1) {
     if (!targetElem) return;
   
     var settings = {
-      version: '6-26-2017-0', //set to override cache after data has been updated 
-      getFile: 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/data/sponsors.csv'      
+      version: '4-12-2018-0', //set to override cache after data has been updated 
+      getFile: 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/data/sponsors.csv'      
     };    
       
     var callback = function (data) {  
@@ -940,7 +939,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
 	}
 
 		// load CSV file  
-		var csvFile = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/data/memorials.csv';
+		var csvFile = 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/data/memorials.csv';
 		klrn.ajaxLoad(csvFile + '?update=' + memorialsSettings.update() + '&version=' + memorialsSettings.version, 			setMemorials);
 		
 		//console.log('CHECK URL STRING: memorials.csv?update=' + memorialsSettings.update() + '&version=' + 	memorialsSettings.version);
@@ -956,7 +955,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
 
   var settings = {
     version: '0', //set to override cache after data has been updated 
-    getFile: 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/data/dinosaur-george.csv'      
+    getFile: 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/data/dinosaur-george.csv'      
   };
 
   var callback = function(data) {
@@ -967,7 +966,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     var i, length = data.length,
         name, file, next,
         output = '<p>';
-        path = 'http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/downloads/dinosaur-george/';
+        path = 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/downloads/dinosaur-george/';
       
     for (i=0;i<length;i++) {
       name = data[i].NAME.length > 0;
