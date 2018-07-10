@@ -448,6 +448,7 @@ exports.swapPromoWrappers = (function() {
     
 //swap KLRN News Updates home page promo with On The Record on Fridays, Saturdays and Sundays
 (function() {
+    return //toggle off 
 	var day = new Date().getDay();
 	if (document.body.className.indexOf('home') === -1 || day < 4) return; //skip if not home page or a weekend day
 	
