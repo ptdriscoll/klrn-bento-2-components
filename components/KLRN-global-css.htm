@@ -113,7 +113,7 @@
 	
     .explorer.passport header { background-color: #2B5998; border-bottom: none; margin-bottom: 1px; z-index: 100; }
 	.explorer.passport header .header-container { 
-        background: #2B5998 url('http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/KLRN_banner_background.png') no-repeat center center;
+        background: #2B5998 url('https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/master/KLRN_banner_background.png') no-repeat center center;
         background-size: auto 75px;
     }   
     .explorer.passport header .header-action-bar { height: 80px; }
@@ -522,7 +522,19 @@
     .explorer.passport.greatread.vote .promo-container.vertical.with-image .promo h2,
     .explorer.passport.greatread.vote .promo-container.vertical.with-image .promo p {
          margin-left: 10px; 
-     } 
+    }
+    
+    /* Great American Read Vote */  
+    .explorer.passport.greatread .page-content p#sponsors {
+        text-align: center; 
+    }
+    .explorer.passport.greatread .page-content p#sponsors img {
+        margin: 15px;
+    }
+    .explorer.passport.greatread .page-content p#sponsors img:nth-child(4) {
+        margin-top: 0; margin-bottom: -15px; position: relative; top: -2px;
+    }
+    
     
 /* customize media and FX ================================================================ */  
     
@@ -552,7 +564,7 @@
         position: absolute;
         text-align: center;  
         content: '';
-        background-image: url('http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/buttons/video-play.png');
+        background-image: url('https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/master/buttons/video-play.png');
         width: 55px;
         height: 55px;                         
         top: 50%;
@@ -737,10 +749,13 @@
    
     @media (max-width: 960px) {
     	.explorer.passport header { 
-        border: 1px solid #2B5998; border: 1px solid #8FB0DE;
+            border: 1px solid #2B5998; border: 1px solid #8FB0DE;
         	padding-bottom: 1px;
-        	background: #2B5998 url('http://pbs.bento.storage.s3.amazonaws.com/hostedbento-prod/filer_public/KLRN/master/KLRN_banner_background.png') no-repeat center top;
+        	background: #2B5998 url('https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/master/KLRN_banner_background.png') no-repeat center top;
     	}
+        .explorer.passport header .main-menu.border-bottom-4px { 
+            border-bottom-width: 0; 
+        }
         .explorer.passport header .header-action-bar { height: 66px; }
     	.explorer.passport header .header-action-bar #station-logo { 
         	margin-top: 0px !important; 
