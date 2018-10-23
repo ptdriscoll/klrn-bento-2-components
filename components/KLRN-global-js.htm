@@ -635,6 +635,23 @@ exports.swapPromoWrappers = (function() {
 //run these scripts only for specific pages  
 ////
     
+//limit character counts in promo descriptions on front page and events page 
+(function() {
+  var cutoff, i;
+  if (klrn.cache.bodyTag.className.indexOf('home') > -1) cutoff = 70;
+  else if (klrn.cache.bodyTag.className.indexOf('events') > -1) cutoff = 150;
+  else return;
+  
+  var elems = document.querySelectorAll('.explorer.passport .promo-container .promo p');
+  if (elems.length === 0) return;
+
+  for (i=0; i<elems.length; i++ ) {
+    if (elems[i].innerText.length > cutoff) {
+      elems[i].innerText = elems[i].innerText.slice(0,cutoff-3) + '...';
+    }  
+  }
+}());    
+    
 //track clicks on homepage slider, and split out Passport slides
 //eventAction can be overwritten, i.e.: ?eventAction=Passport-Clicks
 (function() {
@@ -858,7 +875,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     	//sets variables for CSV file URL parameters        
 		var memorialsSettings = {
 			// only reset this to override browser caches if reloading CSV data in same week
-			version: '2018-0',
+			version: '2018-3',
 			date: this.date || new Date(),
 			// this gets tuesday of current week, so it can be added to CSV link to override browser caches 
 			update: function () {
@@ -895,7 +912,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
         };                
 			
 		data = klrn.parseCSV(data); 
-        console.log(data);    
+        //console.log(data);    
             
 		if (!memorialsElem || data.length < 1) return;
         memorialsElem.innerHTML = '<a id="memorials" name="memorials" class="no_hover">' 
@@ -943,7 +960,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
 		var csvFile = 'https://bento.cdn.pbs.org/hostedbento-prod/filer_public/KLRN/data/memorials.csv';
 		klrn.ajaxLoad(csvFile + '?update=' + memorialsSettings.update() + '&version=' + memorialsSettings.version, 			setMemorials);
 		
-		//console.log('CHECK URL STRING: memorials.csv?update=' + memorialsSettings.update() + '&version=' + 	memorialsSettings.version);
+        //console.log('CHECK URL STRING: memorials.csv?update=' + memorialsSettings.update() + '&version=' + 	memorialsSettings.version);
         
 	}());
 }
