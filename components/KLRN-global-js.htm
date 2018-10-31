@@ -1091,6 +1091,30 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     }  
   }
 }());
+
+//set campaign cookie to manage campaign tracking through funnel
+//the first 3 url variables must be these, 
+//in this order: utm_source, utm_medium, utm_campaign 
+(function() {
+  
+  //only set for these entry pages
+  var path = location.pathname;
+  if (path !== '/support/klrn-endowment/') return;
+  
+  var search = location.search.split('&');
+  var source = search[0].split('utm_source=')[1];
+  var medium = search.length > 1 ? search[1].split('utm_medium=')[1] : '';
+  var campaign = search.length > 2 ? search[2].split('utm_campaign=')[1] : '';
+  var cookieValue = '';
+  
+  if (campaign.length > 0) {
+    var date = new Date();
+    date.setTime(date.getTime() + 183 * 24 * 60 * 60 * 1000).toString();
+    var expires = 'expires=' + date;
+    cookieValue = source + ',' + medium + ',' + campaign;
+    document.cookie = 'klrnCampaign=' + cookieValue + '; ' + expires + '; path=/; domain=klrn.org';
+  }  
+}());
     
 </script> 
 {% endaddtoblock %}
