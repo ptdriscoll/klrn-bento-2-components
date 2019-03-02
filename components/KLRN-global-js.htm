@@ -875,7 +875,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     	//sets variables for CSV file URL parameters        
 		var memorialsSettings = {
 			// only reset this to override browser caches if reloading CSV data in same week
-			version: '2018-3',
+			version: '2019-0',
 			date: this.date || new Date(),
 			// this gets tuesday of current week, so it can be added to CSV link to override browser caches 
 			update: function () {
@@ -1091,10 +1091,10 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     }  
   }
 }());
-
+    
 //set campaign cookie to manage campaign tracking through funnel
 //the first 3 url variables must be these, 
-//in this order: utm_source, utm_medium, utm_campaign 
+//in this order: utm_source, utm_medium, utm_campaign     
 (function() {
   
   //only set for these entry pages
@@ -1114,7 +1114,7 @@ if (klrn.cache.bodyTag.className.indexOf('support klrn-endowment')!==-1) {
     cookieValue = source + ',' + medium + ',' + campaign;
     document.cookie = 'klrnCampaign=' + cookieValue + '; ' + expires + '; path=/; domain=klrn.org';
   }  
-}());
+}());    
     
 </script> 
 {% endaddtoblock %}
