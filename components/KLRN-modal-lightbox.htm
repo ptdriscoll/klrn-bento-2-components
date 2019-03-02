@@ -71,6 +71,7 @@ event_view_label = TextField
 		results = exports.setSchedule(dates.startDates, dates.endDates); 
 		
         //console.log(dates);
+        //console.log(results);
 
 		//FOR TESTING
 		//results.inSchedule = true;
@@ -87,7 +88,7 @@ event_view_label = TextField
 				setExitTime,
                 endCampaign = data[index].end_campaign,
                 trackOpenBool = (!!'{{ event_view_category }}' && !!'{{ event_view_action }}' && !!'{{ event_view_label }}'),
-                trackClickBool = (!!'{{ event_click_category }}' && !!'{{ event_click_action }}' && !!'{{ event_click_label }}');
+                trackClickBool = (!!'{{ event_click_category }}' && !!'{{ event_click_action }}' && !!'{{ event_click_label }}');          
 				
 			//set event tracking code for model opens and clicks, checking first for universal analytics
             if (trackOpenBool) {
@@ -188,8 +189,7 @@ event_view_label = TextField
             }
             else {	            
                 exports = klrn;
-                exports.ajaxLoad('{{ CSV_file }}' 
-                	+ '?version=' + '12-15', callback);        
+                exports.ajaxLoad('{{ CSV_file }}', callback);        
             }	
         }
         checkOnLoad();	
