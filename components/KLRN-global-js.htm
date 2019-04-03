@@ -294,7 +294,16 @@ exports.swapPromoWrappers = (function() {
         
     });         
     
-}(jQuery));    
+}(jQuery)); 
+
+//add background color to right rail antiques roadshow promo
+(function() {
+    var clock = document.querySelector("#antiques_countdown");
+    if (clock) {
+        clock.parentElement.parentElement.style.backgroundColor='#fcf5d9';
+        clock.parentElement.style.marginBottom='0';
+    }    
+}());   
 
 //add page name hierarchy as class names to body
 (function() {
